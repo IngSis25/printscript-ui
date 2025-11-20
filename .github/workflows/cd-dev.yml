@@ -1,20 +1,19 @@
-name: "Continuous Deployment - Prod PrintScript UI"
+name: "Continuous Deployment - Dev PrintScript UI"
 
 on:
   push:
     branches:
-      - main
+      - dev
 
 jobs:
-  build_and_deploy:
+  build_and_push_dev:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -29,12 +28,12 @@ jobs:
       - name: Log in to GitHub Container Registry
         run: echo "${{ github.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build and Push Docker Image to GHCR
+      - name: Build and Push DEV image
         uses: docker/build-push-action@v4
         with:
           push: true
           tags: |
-            ghcr.io/ingsis25/printscript-ui:latest
+            ghcr.io/ingsis25/printscript-ui-dev:latest
           build-args: |
             VITE_AUTH0_DOMAIN=${{ secrets.VITE_AUTH0_DOMAIN }}
             VITE_AUTH0_CLIENT_ID=${{ secrets.VITE_AUTH0_CLIENT_ID }}
