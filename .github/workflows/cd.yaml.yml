@@ -37,7 +37,7 @@ jobs:
         with:
           push: true
           tags: |
-            ghcr.io/ingsis25/printscript-ui:latest
+            ghcr.io/ingsis25/printscript-ui-dev:latest
           build-args: |
             VITE_AUTH0_DOMAIN=${{ secrets.VITE_AUTH0_DOMAIN }}
             VITE_AUTH0_CLIENT_ID=${{ secrets.VITE_AUTH0_CLIENT_ID }}
