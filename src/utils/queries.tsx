@@ -21,7 +21,7 @@ export const useSnippetsOperations = () => {
            .catch(error => console.error(error));
    });
 
-  const snippetOperations: SnippetOperations = new FakeSnippetOperations(/* getAccessTokenSilently */); // TODO: Replace with your implementation
+  const snippetOperations: SnippetOperations = new SnippetServiceOperations();
 
   return snippetOperations
 }
