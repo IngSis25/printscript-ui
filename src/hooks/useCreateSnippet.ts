@@ -1,15 +1,17 @@
 import {Snippet} from "../utils/snippet.ts";
+import {SNIPPETS_SERVICE_URL} from "../utils/constants.ts";
+
 
 export const useCreateSnippet = async (name: string, content: string, language: string, extension: string): Promise<Snippet> => {
     try {
-        const response = await fetch("/snippets", {
+        const response = await fetch(`${SNIPPETS_SERVICE_URL}/api/snippets`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem('access_token')}`
             },
             body: JSON.stringify({name, content, language, extension})
         });
-
         if (!response.ok) {
             console.error("Failed to create snippet");
         }

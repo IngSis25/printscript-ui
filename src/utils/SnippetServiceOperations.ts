@@ -20,6 +20,7 @@ export class SnippetServiceOperations implements SnippetOperations {
     createSnippet = async (createSnippet: CreateSnippet): Promise<Snippet> => {
         const {name, content, language, extension} = createSnippet;
         try {
+            console.log("Token:" + localStorage.getItem('access_token'));
             return await useCreateSnippet(name, content, language, extension);
         } catch (error) {
             if (error instanceof Error) {
