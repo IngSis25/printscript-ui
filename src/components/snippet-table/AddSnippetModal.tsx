@@ -28,13 +28,19 @@ export const AddSnippetModal = ({open, onClose, defaultSnippet}: {
     onClose: () => void,
     defaultSnippet?: CreateSnippetWithLang
 }) => {
-    const [language, setLanguage] = useState(defaultSnippet?.language ?? "printscript");
+    const [language, setLanguage] = useState(defaultSnippet?.language ?? "Printscript");
     const [code, setCode] = useState(defaultSnippet?.content ?? "");
     const [snippetName, setSnippetName] = useState(defaultSnippet?.name ?? "")
     const {mutateAsync: createSnippet, isLoading: loadingSnippet} = useCreateSnippet({
         onSuccess: () => queryClient.invalidateQueries('listSnippets')
     })
-    const {data: fileTypes} = useGetFileTypes();
+    const {data: fileTypes, isLoading: loadingFileTypes, error: fileTypesError} = useGetFileTypes();
+
+    useEffect(() => {
+        console.log("FileTypes data:", fileTypes);
+        console.log("Loading fileTypes:", loadingFileTypes);
+        console.log("FileTypes error:", fileTypesError);
+    }, [fileTypes, loadingFileTypes, fileTypesError]);
 
     const handleCreateSnippet = async () => {
         const newSnippet: CreateSnippet = {
@@ -87,21 +93,27 @@ export const AddSnippetModal = ({open, onClose, defaultSnippet}: {
                 flexDirection: 'column',
                 gap: '16px'
             }}>
-                <InputLabel htmlFor="name">Language</InputLabel>
+                <InputLabel htmlFor="language">Language</InputLabel>
                 <Select
-                    labelId="demo-simple-select-label"
-                    id="demo-simple-select"
+                    labelId="language-select-label"
+                    id="language-select"
                     value={language}
-                    label="Age"
                     onChange={(e: SelectChangeEvent<string>) => setLanguage(e.target.value)}
                     sx={{width: '50%'}}
+                    disabled={loadingFileTypes}
                 >
-                    {
-                        fileTypes?.map(x => (
+                    {loadingFileTypes ? (
+                        <MenuItem disabled>Loading languages...</MenuItem>
+                    ) : fileTypesError ? (
+                        <MenuItem disabled>Error loading languages</MenuItem>
+                    ) : fileTypes && fileTypes.length > 0 ? (
+                        fileTypes.map(x => (
                             <MenuItem data-testid={`menu-option-${x.language}`} key={x.language}
                                       value={x.language}>{capitalize((x.language))}</MenuItem>
                         ))
-                    }
+                    ) : (
+                        <MenuItem disabled>No languages available</MenuItem>
+                    )}
                 </Select>
             </Box>
             <InputLabel>Code Snippet</InputLabel>

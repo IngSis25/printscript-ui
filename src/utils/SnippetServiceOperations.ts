@@ -6,22 +6,37 @@ import {FileType} from "../types/FileType.ts";
 import {PaginatedUsers} from "./users.ts";
 import {useCreateSnippet} from "../hooks/useCreateSnippet.ts";
 import {CreateSnippet, PaginatedSnippets, Snippet, UpdateSnippet} from "./snippet.ts";
+import {User} from "@auth0/auth0-react";
+import {VITE_AUTH0_AUDIENCE} from "./constants.ts";
+import {axiosInstance} from "../hooks/axios.config.ts";
 
-
+const options = {
+    authorizationParams: {
+        audience: VITE_AUTH0_AUDIENCE,
+    },
+};
 
 export class SnippetServiceOperations implements SnippetOperations {
+    private user?: User;
+
+    constructor(user?: User, private readonly getAccessTokenSilently?) {
+        this.user = user
+    }
+
 
     listSnippetDescriptors(page: number, pageSize: number, snippetName?: string | undefined): Promise<PaginatedSnippets> {
         console.log(page, pageSize, snippetName);
         throw new Error("Method not implemented.");
     }
 
-
     createSnippet = async (createSnippet: CreateSnippet): Promise<Snippet> => {
+        const token = await this.getAccessTokenSilently(options);
+        localStorage.setItem('access_token', token);
         const {name, content, language, extension} = createSnippet;
+        const owner = this.user?.email
         try {
             console.log("Token:" + localStorage.getItem('access_token'));
-            return await useCreateSnippet(name, content, language, extension);
+            return await useCreateSnippet(name, content, language, extension, token, owner);
         } catch (error) {
             if (error instanceof Error) {
                 throw new Error("Failed to create snippet: " + error.message);
@@ -90,7 +105,19 @@ export class SnippetServiceOperations implements SnippetOperations {
     }
 
     getFileTypes(): Promise<FileType[]> {
-        throw new Error("Method not implemented.");
+        return axiosInstance.get<Array<{id: number, name: string, version: string, extension: string}>>("/languages/all")
+            .then(response => {
+                const fileTypes = response.data.map(lang => ({
+                    language: lang.name,
+                    extension: lang.extension,
+                }));
+                console.log("File types fetched:", fileTypes);
+                return fileTypes;
+            })
+            .catch(error => {
+                console.error("Error fetching file types:", error);
+                return [];
+            });
     }
 
     modifyFormatRule(newRules: Rule[]): Promise<Rule[]> {
