@@ -8,7 +8,7 @@ import {useCreateSnippet} from "../hooks/useCreateSnippet.ts";
 import {CreateSnippet, PaginatedSnippets, Snippet, UpdateSnippet} from "./snippet.ts";
 import {User} from "@auth0/auth0-react";
 import {VITE_AUTH0_AUDIENCE} from "./constants.ts";
-import {axiosInstance} from "../hooks/axios.config.ts";
+import {fetchFileTypes} from "../hooks/fetchFileTypes.ts";
 
 const options = {
     authorizationParams: {
@@ -104,20 +104,8 @@ export class SnippetServiceOperations implements SnippetOperations {
         throw new Error("Method not implemented.");
     }
 
-    getFileTypes(): Promise<FileType[]> {
-        return axiosInstance.get<Array<{id: number, name: string, version: string, extension: string}>>("/languages/all")
-            .then(response => {
-                const fileTypes = response.data.map(lang => ({
-                    language: lang.name,
-                    extension: lang.extension,
-                }));
-                console.log("File types fetched:", fileTypes);
-                return fileTypes;
-            })
-            .catch(error => {
-                console.error("Error fetching file types:", error);
-                return [];
-            });
+    async getFileTypes(): Promise<FileType[]> {
+        return fetchFileTypes();
     }
 
     modifyFormatRule(newRules: Rule[]): Promise<Rule[]> {

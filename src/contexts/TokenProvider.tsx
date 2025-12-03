@@ -23,6 +23,7 @@ export const TokenProvider: React.FC<TokenProviderProps> = ({ children }) => {
         try {
             const fetchedToken = await getAccessTokenSilently({ authorizationParams: { scope: 'read:snippets' } });
 
+            localStorage.setItem('access_token', fetchedToken);
             setAuthorizationToken(fetchedToken);
             const snippetOps = new SnippetServiceOperations(user);
             setSnippetOperations(snippetOps);

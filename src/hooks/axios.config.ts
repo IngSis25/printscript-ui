@@ -8,17 +8,17 @@ const axiosInstance = axios.create({
     },
 });
 
-// const setAuthorizationToken = (token: string) => {
-//     axiosInstance.defaults.headers['Authorization'] = `Bearer ${token}`;
-// };
+export const setAuthorizationToken = (token: string) => {
+    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+};
 
-// axiosInstance.interceptors.request.use((config) => {
-//     const token = localStorage.getItem("access_token");
-//     if (token) {
-//         config.headers = config.headers || {};
-//         config.headers["Authorization"] = `Bearer ${token}`;
-//     }
-//     return config;
-// });
+axiosInstance.interceptors.request.use((config) => {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+        config.headers = config.headers || {};
+        config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    return config;
+});
 
 export { axiosInstance };
