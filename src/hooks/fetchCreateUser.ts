@@ -6,7 +6,7 @@ import {axiosInstance} from "./axios.config.ts";
 export const fetchCreateUser = async (email: string): Promise<User> => {
 
     try {
-        const response = await axiosInstance.post<User>("/user/", {email})
+        const response = await axiosInstance.post<User>("api/user/", {email})
 
         return response.data;
     } catch (error) {
