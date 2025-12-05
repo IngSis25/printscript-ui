@@ -1,4 +1,4 @@
-
+import { AUTH0_DOMAIN, FRONTEND_URL } from '../constants';
 
 export function loginViaAuth0Ui(username: string, password: string) {
   // App landing page redirects to Auth0.
@@ -6,7 +6,7 @@ export function loginViaAuth0Ui(username: string, password: string) {
 
   // Login on Auth0.
   cy.origin(
-      Cypress.env('auth0_domain'),
+      AUTH0_DOMAIN,
       { args: { username, password } },
       ({ username, password }) => {
         cy.get('input#username').type(username)
@@ -15,8 +15,8 @@ export function loginViaAuth0Ui(username: string, password: string) {
       }
   )
 
-  // Ensure Auth0 has redirected us back to the RWA.
-  cy.url().should('equal', 'http://localhost:3000/')
+  // Ensure Auth0 has redirected us back to the app.
+  cy.url().should('include', FRONTEND_URL)
 }
 
 

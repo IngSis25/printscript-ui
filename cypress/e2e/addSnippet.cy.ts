@@ -1,11 +1,14 @@
-import {BACKEND_URL} from "../support/constants";
+import {BACKEND_URL, AUTH0_USERNAME, AUTH0_PASSWORD} from "../support/constants";
 
 describe('Add snippet tests', () => {
   beforeEach(() => {
-    // cy.loginToAuth0(
-    //     AUTH0_USERNAME,
-    //     AUTH0_PASSWORD
-    // )
+    // Solo hacer login si las credenciales están configuradas
+    if (AUTH0_USERNAME && AUTH0_PASSWORD) {
+      cy.loginToAuth0(
+          AUTH0_USERNAME,
+          AUTH0_PASSWORD
+      )
+    }
   })
   it('Can add snippets manually', () => {
     cy.visit("/")
