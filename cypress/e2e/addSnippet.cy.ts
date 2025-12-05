@@ -1,4 +1,4 @@
-import {BACKEND_URL} from "../../src/utils/constants";
+import {BACKEND_URL} from "../support/constants";
 
 describe('Add snippet tests', () => {
   beforeEach(() => {

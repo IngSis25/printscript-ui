@@ -1,4 +1,4 @@
-import {AUTH0_PASSWORD, AUTH0_USERNAME, BACKEND_URL, FRONTEND_URL} from "../../src/utils/constants";
+import {AUTH0_PASSWORD, AUTH0_USERNAME, BACKEND_URL, FRONTEND_URL} from "../support/constants";
 import {CreateSnippet} from "../../src/utils/snippet";
 
 describe('Home', () => {
@@ -8,10 +8,7 @@ describe('Home', () => {
     //     AUTH0_PASSWORD
     // )
   })
-  before(() => {
-    process.env.FRONTEND_URL = Cypress.env("FRONTEND_URL");
-    process.env.BACKEND_URL = Cypress.env("BACKEND_URL");
-  })
+  // Las constantes ya están disponibles desde el import
   it('Renders home', () => {
     cy.visit(FRONTEND_URL)
     /* ==== Generated with Cypress Studio ==== */
