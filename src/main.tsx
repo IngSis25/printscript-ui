@@ -5,6 +5,7 @@ import {createRoot} from "react-dom/client";
 import {PaginationProvider} from "./contexts/paginationProvider.tsx";
 import {SnackbarProvider} from "./contexts/snackbarProvider.tsx";
 import {Auth0Provider} from "@auth0/auth0-react";
+import {TokenProvider} from "./contexts/TokenProvider.tsx";
 
 createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
@@ -13,14 +14,16 @@ createRoot(document.getElementById('root')!).render(
             clientId={import.meta.env.VITE_AUTH0_CLIENT_ID ?? ""}
             authorizationParams={{
                 redirect_uri: window.location.origin,
-                audience: "https://snippet-searcher.api",
+                audience: import.meta.env.VITE_AUTH0_AUDIENCE,
             }}
         >
-            <PaginationProvider>
-                <SnackbarProvider>
-                    <App/>
-                </SnackbarProvider>
-            </PaginationProvider>
+            <TokenProvider>
+                <PaginationProvider>
+                    <SnackbarProvider>
+                        <App/>
+                    </SnackbarProvider>
+                </PaginationProvider>
+            </TokenProvider>
         </Auth0Provider>
     </React.StrictMode>,
 )
