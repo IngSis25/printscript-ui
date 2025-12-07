@@ -60,8 +60,8 @@ export const useGetUsers = (name: string = "", page: number = 0, pageSize: numbe
 export const useShareSnippet = () => {
     const snippetOperations = useSnippetsOperations();
 
-    return useMutation<Snippet, Error, { snippetId: string; userId: string }>(
-        ({snippetId, userId}) => snippetOperations.shareSnippet(snippetId, userId)
+    return useMutation<Snippet, Error, { snippetId: string; userEmail: string }>(
+        ({ snippetId, userEmail }) => snippetOperations.shareSnippet(snippetId, userEmail)
     );
 };
 

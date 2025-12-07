@@ -7,7 +7,7 @@ import {User} from "../../utils/users.ts";
 type ShareSnippetModalProps = {
   open: boolean
   onClose: () => void
-  onShare: (userId: string) => void
+  onShare: (userEmail: string) => void
   loading: boolean
 }
 export const ShareSnippetModal = (props: ShareSnippetModalProps) => {
@@ -20,7 +20,7 @@ export const ShareSnippetModal = (props: ShareSnippetModalProps) => {
   useEffect(() => {
     const getData = setTimeout(() => {
       setDebouncedName(name)
-    }, 3000)
+    }, 500) // Reducido de 3000ms a 500ms para respuesta más rápida
     return () => clearTimeout(getData)
   }, [name])
 
@@ -42,12 +42,15 @@ export const ShareSnippetModal = (props: ShareSnippetModalProps) => {
               getOptionLabel={(option) => option.name}
               loading={isLoading}
               value={selectedUser}
-              onInputChange={(_: unknown, newValue: string | null) => newValue && setName(newValue)}
+              inputValue={name}
+              onInputChange={(_: unknown, newValue: string) => setName(newValue)}
               onChange={(_: unknown, newValue: User | null) => handleSelectUser(newValue)}
+              freeSolo={false}
+              filterOptions={(x) => x} // Deshabilitar filtrado local, usar solo los resultados del servidor
           />
           <Box mt={4} display={"flex"} width={"100%"} justifyContent={"flex-end"}>
             <Button onClick={onClose} variant={"outlined"}>Cancel</Button>
-            <Button disabled={!selectedUser || loading} onClick={() => selectedUser && onShare(selectedUser?.id)} sx={{marginLeft: 2}} variant={"contained"}>Share</Button>
+            <Button disabled={!selectedUser || loading} onClick={() => selectedUser && onShare(selectedUser.name)} sx={{marginLeft: 2}} variant={"contained"}>Share</Button>
           </Box>
         </Box>
       </ModalWrapper>

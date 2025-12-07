@@ -12,6 +12,9 @@ import {fetchFileTypes} from "../hooks/fetchFileTypes.ts";
 import {fetchSnippetById} from "../hooks/fetchSnippetById.ts";
 import {fetchUserSnippets} from "../hooks/fetchUserSnippets.ts";
 import {fetchUpdateSnippet} from "../hooks/fetchUpdateSnippet.ts";
+import {fetchShareSnippet} from "../hooks/fetchShareSnippets.ts";
+import {axiosInstance} from "../hooks/axios.config.ts";
+import {fetchUserFriends} from "../hooks/fetchUserFriends.ts";
 
 const options = {
     authorizationParams: {
@@ -88,15 +91,32 @@ export class SnippetServiceOperations implements SnippetOperations {
         return fetchUpdateSnippet(id, updateSnippet.content);
     }
 
-    getUserFriends(name?: string | undefined, page?: number | undefined, pageSize?: number | undefined): Promise<PaginatedUsers> {
-        console.log(name, page, pageSize);
-        throw new Error("Method not implemented.");
+    async getUserFriends(
+        search?: string,
+    ): Promise<PaginatedUsers> {
+        const email = this.user?.email ?? "";
+        return await fetchUserFriends(search ?? "", email);
     }
 
-    shareSnippet(snippetId: string, userId: string): Promise<Snippet> {
-        console.log(snippetId, userId);
-        throw new Error("Method not implemented.");
+    // async getUserById(id: string): Promise<{ email?: string }> {
+    //     const response = await axiosInstance.get(`/user/auth0/${id}`);
+    //     if (response && response.data) {
+    //         return response.data;
+    //     } else {
+    //         throw new Error("User not found");
+    //     }
+    // }
+
+    async shareSnippet(snippetId: string, userEmail: string): Promise<Snippet> {
+        const ownerEmail = this.user?.email;
+
+        if (!userEmail) {
+            throw new Error("User email not found");
+        }
+
+        return await fetchShareSnippet(snippetId, userEmail, ownerEmail);
     }
+
 
     getFormatRules(): Promise<Rule[]> {
         throw new Error("Method not implemented.");
