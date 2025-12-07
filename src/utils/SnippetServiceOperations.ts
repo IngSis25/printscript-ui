@@ -11,6 +11,7 @@ import {VITE_AUTH0_AUDIENCE} from "./constants.ts";
 import {fetchFileTypes} from "../hooks/fetchFileTypes.ts";
 import {fetchSnippetById} from "../hooks/fetchSnippetById.ts";
 import {fetchUserSnippets} from "../hooks/fetchUserSnippets.ts";
+import {fetchUpdateSnippet} from "../hooks/fetchUpdateSnippet.ts";
 
 const options = {
     authorizationParams: {
@@ -84,7 +85,7 @@ export class SnippetServiceOperations implements SnippetOperations {
 
     updateSnippetById(id: string, updateSnippet: UpdateSnippet): Promise<Snippet> {
         console.log(id, updateSnippet);
-        throw new Error("Method not implemented.");
+        return fetchUpdateSnippet(id, updateSnippet.content);
     }
 
     getUserFriends(name?: string | undefined, page?: number | undefined, pageSize?: number | undefined): Promise<PaginatedUsers> {
