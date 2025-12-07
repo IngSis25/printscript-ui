@@ -9,6 +9,8 @@ import {CreateSnippet, PaginatedSnippets, Snippet, UpdateSnippet} from "./snippe
 import {User} from "@auth0/auth0-react";
 import {VITE_AUTH0_AUDIENCE} from "./constants.ts";
 import {fetchFileTypes} from "../hooks/fetchFileTypes.ts";
+import {fetchSnippetById} from "../hooks/fetchSnippetById.ts";
+import {fetchUserSnippets} from "../hooks/fetchUserSnippets.ts";
 
 const options = {
     authorizationParams: {
@@ -23,10 +25,24 @@ export class SnippetServiceOperations implements SnippetOperations {
         this.user = user
     }
 
-
-    listSnippetDescriptors(page: number, pageSize: number, snippetName?: string | undefined): Promise<PaginatedSnippets> {
-        console.log(page, pageSize, snippetName);
-        throw new Error("Method not implemented.");
+    async listSnippetDescriptors(page: number, pageSize: number, snippetName?: string | undefined): Promise<PaginatedSnippets> {
+        console.log("listSnippetDescriptors called with page:", page, "pageSize:", pageSize, "snippetName:", snippetName);
+        if (!this.user?.sub) {
+            console.error("listSnippetDescriptors: user.sub is not available");
+            throw new Error("User not authenticated");
+        }
+        try {
+            // Asegurar que tenemos el token antes de hacer la petición
+            if (this.getAccessTokenSilently) {
+                const token = await this.getAccessTokenSilently(options);
+                localStorage.setItem('access_token', token);
+                console.log("Token obtained and stored for listSnippetDescriptors");
+            }
+            return await fetchUserSnippets(this.user.sub, page, pageSize, snippetName);
+        } catch (error) {
+            console.error("Error in listSnippetDescriptors:", error);
+            throw error;
+        }
     }
 
     createSnippet = async (createSnippet: CreateSnippet): Promise<Snippet> => {
@@ -46,9 +62,24 @@ export class SnippetServiceOperations implements SnippetOperations {
         }
     };
 
-    getSnippetById(id: string): Promise<Snippet | undefined> {
-        console.log(id);
-        throw new Error("Method not implemented.");
+    async getSnippetById(id: string): Promise<Snippet | undefined> {
+        console.log("getSnippetById called with ID:", id);
+        if (!id) {
+            console.error("getSnippetById: id is empty or undefined");
+            return undefined;
+        }
+        try {
+            // Asegurar que tenemos el token antes de hacer la petición
+            if (this.getAccessTokenSilently) {
+                const token = await this.getAccessTokenSilently(options);
+                localStorage.setItem('access_token', token);
+                console.log("Token obtained and stored");
+            }
+            return await fetchSnippetById(id);
+        } catch (error) {
+            console.error("Error in getSnippetById:", error);
+            throw error;
+        }
     }
 
     updateSnippetById(id: string, updateSnippet: UpdateSnippet): Promise<Snippet> {

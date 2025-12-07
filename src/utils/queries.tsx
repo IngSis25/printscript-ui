@@ -21,9 +21,13 @@ export const useGetSnippets = (page: number = 0, pageSize: number = 10, snippetN
 };
 
 export const useGetSnippetById = (id: string) => {
-    const snippetOperations = useSnippetsOperations();
+    const snippetOperations = useSnippetsOperations()
+    console.log("useGetSnippetById called with id:", id, "enabled:", !!id);
 
-    return useQuery<Snippet | undefined, Error>(['snippet', id], () => snippetOperations.getSnippetById(id), {
+    return useQuery<Snippet | undefined, Error>(['snippet', id], () => {
+        console.log("Query function executing for id:", id);
+        return snippetOperations.getSnippetById(id);
+    }, {
         enabled: !!id, // This query will not execute until the id is provided
     });
 };
