@@ -73,9 +73,16 @@ export class FakeSnippetOperations implements SnippetOperations {
     })
   }
 
-  formatSnippet(snippetContent: string): Promise<string> {
+  formatSnippet(snippetId: string): Promise<string> {
     return new Promise(resolve => {
-      setTimeout(() => resolve(this.fakeStore.formatSnippet(snippetContent)), DELAY)
+      setTimeout(() => {
+        const snippet = this.fakeStore.getSnippetById(snippetId)
+        if (snippet) {
+          resolve(this.fakeStore.formatSnippet(snippet.content ?? ""))
+        } else {
+          resolve("")
+        }
+      }, DELAY)
     })
   }
 

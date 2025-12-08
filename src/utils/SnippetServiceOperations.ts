@@ -7,7 +7,7 @@ import {PaginatedUsers} from "./users.ts";
 import {useCreateSnippet} from "../hooks/useCreateSnippet.ts";
 import {CreateSnippet, PaginatedSnippets, Snippet, UpdateSnippet} from "./snippet.ts";
 import {User} from "@auth0/auth0-react";
-import {VITE_AUTH0_AUDIENCE, RUNNER_SERVICE_URL} from "./constants.ts";
+import {VITE_AUTH0_AUDIENCE, RUNNER_SERVICE_URL, SNIPPETS_SERVICE_URL} from "./constants.ts";
 import {fetchFileTypes} from "../hooks/fetchFileTypes.ts";
 import {fetchSnippetById} from "../hooks/fetchSnippetById.ts";
 import {fetchUserSnippets} from "../hooks/fetchUserSnippets.ts";
@@ -174,8 +174,19 @@ export class SnippetServiceOperations implements SnippetOperations {
     }
 
 
-    getFormatRules(): Promise<Rule[]> {
-        throw new Error("Method not implemented.");
+    async getFormatRules(): Promise<Rule[]> {
+        if (!this.getAccessTokenSilently) {
+            throw new Error("No se puede obtener el token de autenticación");
+        }
+        // fetchWithAuth ya maneja el token automáticamente
+        const response = await this.fetchWithAuth(
+            `${SNIPPETS_SERVICE_URL}/api/rules/format?version=1.1`,
+            {
+                method: "GET",
+            }
+        );
+        
+        return await response.json();
     }
 
     getLintingRules(): Promise<Rule[]> {
@@ -187,9 +198,20 @@ export class SnippetServiceOperations implements SnippetOperations {
         throw new Error("Method not implemented.");
     }
 
-    formatSnippet(snippet: string): Promise<string> {
-        console.log(snippet);
-        throw new Error("Method not implemented.");
+    async formatSnippet(snippetId: string): Promise<string> {
+        if (!this.getAccessTokenSilently) {
+            throw new Error("No se puede obtener el token de autenticación");
+        }
+        // Llamar al endpoint para formatear el snippet (síncrono)
+        const response = await this.fetchWithAuth(
+            `${SNIPPETS_SERVICE_URL}/api/snippets/run/${snippetId}/format`,
+            {
+                method: "POST",
+            }
+        );
+        
+        const result = await response.json();
+        return result.content ?? "";
     }
 
     postTestCase(testCase: Partial<TestCase>): Promise<TestCase> {
@@ -216,9 +238,25 @@ export class SnippetServiceOperations implements SnippetOperations {
         return fetchFileTypes();
     }
 
-    modifyFormatRule(newRules: Rule[]): Promise<Rule[]> {
-        console.log(newRules);
-        throw new Error("Method not implemented.");
+    async modifyFormatRule(newRules: Rule[]): Promise<Rule[]> {
+        if (!this.getAccessTokenSilently) {
+            throw new Error("No se puede obtener el token de autenticación");
+        }
+        // fetchWithAuth ya maneja el token automáticamente
+        const response = await this.fetchWithAuth(
+            `${SNIPPETS_SERVICE_URL}/api/rules/format`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    rules: newRules,
+                }),
+            }
+        );
+        
+        return await response.json();
     }
 
     modifyLintingRule(newRules: Rule[]): Promise<Rule[]> {
