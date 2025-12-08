@@ -1,7 +1,7 @@
 import {Autocomplete, Box, Button, Divider, TextField, Typography} from "@mui/material";
 import {ModalWrapper} from "../common/ModalWrapper.tsx";
 import {useGetUsers} from "../../utils/queries.tsx";
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {User} from "../../utils/users.ts";
 
 type ShareSnippetModalProps = {
@@ -9,20 +9,40 @@ type ShareSnippetModalProps = {
   onClose: () => void
   onShare: (userEmail: string) => void
   loading: boolean
+  users?: User[]
+  usersLoading?: boolean
 }
 export const ShareSnippetModal = (props: ShareSnippetModalProps) => {
-  const {open, onClose, onShare, loading} = props
+  const {open, onClose, onShare, loading, users: usersProp, usersLoading: usersLoadingProp} = props
   const [name, setName] = useState("")
   const [debouncedName, setDebouncedName] = useState("")
-  const {data, isLoading} = useGetUsers(debouncedName, 1, 5)
+  const {data, isLoading: isLoadingInternal} = useGetUsers(debouncedName, 1, 5)
   const [selectedUser, setSelectedUser] = useState<User | undefined>()
 
+  // Si users se proporciona como prop, usarlos. Si no, usar la búsqueda interna
+  const users = usersProp ?? data?.users ?? []
+  const isLoading = usersLoadingProp ?? isLoadingInternal
+
+  // Filtrar usuarios localmente si se proporcionan como prop
+  const filteredUsers = useMemo(() => {
+    if (usersProp && name.trim()) {
+      const searchLower = name.toLowerCase()
+      return usersProp.filter(user => 
+        user.name.toLowerCase().includes(searchLower)
+      )
+    }
+    return users
+  }, [usersProp, users, name])
+
   useEffect(() => {
-    const getData = setTimeout(() => {
-      setDebouncedName(name)
-    }, 500) // Reducido de 3000ms a 500ms para respuesta más rápida
-    return () => clearTimeout(getData)
-  }, [name])
+    if (!usersProp) {
+      // Solo usar debounce si no se proporcionan usuarios como prop
+      const getData = setTimeout(() => {
+        setDebouncedName(name)
+      }, 500)
+      return () => clearTimeout(getData)
+    }
+  }, [name, usersProp])
 
   function handleSelectUser(newValue: User | null) {
     newValue && setSelectedUser(newValue)
@@ -35,7 +55,7 @@ export const ShareSnippetModal = (props: ShareSnippetModalProps) => {
         <Box mt={2}>
           <Autocomplete
               renderInput={(params) => <TextField {...params} label="Type the user's name"/>}
-              options={data?.users ?? []}
+              options={filteredUsers}
               isOptionEqualToValue={(option, value) =>
                   option.id === value.id
               }
@@ -46,7 +66,7 @@ export const ShareSnippetModal = (props: ShareSnippetModalProps) => {
               onInputChange={(_: unknown, newValue: string) => setName(newValue)}
               onChange={(_: unknown, newValue: User | null) => handleSelectUser(newValue)}
               freeSolo={false}
-              filterOptions={(x) => x} // Deshabilitar filtrado local, usar solo los resultados del servidor
+              filterOptions={(x) => x} // Deshabilitar filtrado local, usar solo los resultados del servidor o el filtrado manual
           />
           <Box mt={4} display={"flex"} width={"100%"} justifyContent={"flex-end"}>
             <Button onClick={onClose} variant={"outlined"}>Cancel</Button>

@@ -9,6 +9,7 @@ import {Rule} from "../types/Rule.ts";
 import {SnippetServiceOperations} from "./SnippetServiceOperations.ts";
 
 
+
 export const useSnippetsOperations = () => {
    const {getAccessTokenSilently, user} = useAuth0()
    const snippetOperations: SnippetOperations = new SnippetServiceOperations(user, getAccessTokenSilently);

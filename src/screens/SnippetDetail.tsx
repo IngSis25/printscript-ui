@@ -328,7 +328,7 @@ export const SnippetDetail = (props: SnippetDetailProps) => {
                 open={shareModalOppened}
                 onClose={() => setShareModalOppened(false)}
                 onShare={handleShareSnippet}
-                users={usersData?.items}
+                users={usersData?.users}
                 usersLoading={loadingUsers}
             />
 
@@ -338,12 +338,9 @@ export const SnippetDetail = (props: SnippetDetailProps) => {
                 snippetId={id}
             />
 
-            <DeleteConfirmationModal
-                open={deleteConfirmationModalOpen}
-                onClose={() => setDeleteConfirmationModalOpen(false)}
-                id={snippet?.id ?? ""}
-                setCloseDetails={handleCloseModal}
-            />
+            <DeleteConfirmationModal open={deleteConfirmationModalOpen}
+                                     onClose={() => setDeleteConfirmationModalOpen(false)}
+                                     id={snippet?.id ?? ""} setCloseDetails={handleCloseModal}/>
         </Box>
     );
 };

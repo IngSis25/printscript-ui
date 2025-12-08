@@ -14,6 +14,7 @@ import {fetchUserSnippets} from "../hooks/fetchUserSnippets.ts";
 import {fetchUpdateSnippet} from "../hooks/fetchUpdateSnippet.ts";
 import {fetchShareSnippet} from "../hooks/fetchShareSnippets.ts";
 import {fetchUserFriends} from "../hooks/fetchUserFriends.ts";
+import {axiosInstance} from "../hooks/axios.config.ts";
 
 const options = {
     authorizationParams: {
@@ -202,10 +203,21 @@ export class SnippetServiceOperations implements SnippetOperations {
         throw new Error("Method not implemented.");
     }
 
-    deleteSnippet(id: string): Promise<string> {
-        console.log(id);
-        throw new Error("Method not implemented.");
+    async deleteSnippet(id: string): Promise<string> {
+        try {
+            console.log("🧹 Deleting snippet with id:", id);  // LOG CLAVE
+
+            await axiosInstance.post(`/api/snippets/delete/${id}`);
+            return `Snippet of id: ${id} deleted successfully`;
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error("Failed to delete snippet: " + error.message);
+            } else {
+                throw new Error("Failed to delete snippet: An unexpected error occurred");
+            }
+        }
     }
+
 
     testSnippet(testCase: Partial<TestCase>): Promise<TestCaseResult> {
         console.log(testCase);
@@ -231,7 +243,7 @@ export class SnippetServiceOperations implements SnippetOperations {
         throw new Error("Method not implemented.");
     }
 
-    async runSnippet(snippetId: string, inputs?: string[]): Promise<string[]> {
+     async runSnippet(snippetId: string, inputs?: string[]): Promise<string[]> {
         // inputs se reserva para uso futuro cuando el runner-service soporte inputs interactivos
         console.log("Running snippet:", snippetId, "with inputs:", inputs);
         try {
