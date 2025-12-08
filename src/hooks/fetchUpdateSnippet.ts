@@ -6,7 +6,7 @@ import {toast} from "react-toastify";
 
 const fetchUpdateSnippet = async (id: string, content: string): Promise<SnippetWithErr> => {
     try {
-        const response = await axiosInstance.put(`api/snippets/${id}`, {content})
+        const response = await axiosInstance.put(`snippets/${id}`, {content})  // axiosInstance already has /api prefix
 
         const result = {
             id: response.data.id,
@@ -28,6 +28,13 @@ const fetchUpdateSnippet = async (id: string, content: string): Promise<SnippetW
         return result
     } catch (error) {
         if (axios.isAxiosError(error)) {
+            // Manejar específicamente el error 403 (Forbidden) para permisos de Viewer
+            if (error.response?.status === 403) {
+                const errorMessage = error.response?.headers?.["error-message"] 
+                    || error.response?.data?.message 
+                    || "No tenés permisos para editar este snippet. Solo tenés permisos de lectura (Viewer).";
+                throw new Error(errorMessage);
+            }
             throw new Error(error.response?.data?.message || error.message);
         } else {
             throw new Error("An unexpected error occurred");

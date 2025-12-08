@@ -5,11 +5,26 @@ import {axiosInstance} from "./axios.config.ts";
 const fetchSnippetById = async (id: string): Promise<Snippet | undefined> => {
     console.log("fetchSnippetById called with id:", id);
     try {
-        const url = `api/snippets/${id}`;
+        const url = `api/snippets/${id}`;  // axiosInstance already has /api prefix
         console.log("Making request to:", url);
         const response = await axiosInstance.get(url);
         console.log("Response received:", response.data);
-        return response.data as Snippet;
+        
+        // Transformar la respuesta para incluir userRole en el objeto Snippet
+        const data = response.data;
+        return {
+            id: data.id.toString(),
+            name: data.name,
+            content: data.content,
+            language: data.language,
+            extension: data.extension,
+            version: data.version,
+            status: data.status,
+            author: data.owner,
+            owner: data.owner,
+            errors: data.errors || [],
+            userRole: data.userRole || undefined,
+        } as Snippet;
     } catch (error) {
         console.error("Error in fetchSnippetById:", error);
         if (axios.isAxiosError(error)) {

@@ -61,8 +61,8 @@ export const useGetUsers = (name: string = "", page: number = 0, pageSize: numbe
 export const useShareSnippet = () => {
     const snippetOperations = useSnippetsOperations();
 
-    return useMutation<Snippet, Error, { snippetId: string; userEmail: string }>(
-        ({ snippetId, userEmail }) => snippetOperations.shareSnippet(snippetId, userEmail)
+    return useMutation<Snippet, Error, { snippetId: string; userEmail: string; role: string }>(
+        ({ snippetId, userEmail, role }) => snippetOperations.shareSnippet(snippetId, userEmail, role)
     );
 };
 

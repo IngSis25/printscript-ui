@@ -165,14 +165,14 @@ export class SnippetServiceOperations implements SnippetOperations {
     //     }
     // }
 
-    async shareSnippet(snippetId: string, userEmail: string): Promise<Snippet> {
+    async shareSnippet(snippetId: string, userEmail: string, role: string = "Editor"): Promise<Snippet> {
         const ownerEmail = this.user?.email;
 
         if (!userEmail) {
             throw new Error("User email not found");
         }
 
-        return await fetchShareSnippet(snippetId, userEmail, ownerEmail);
+        return await fetchShareSnippet(snippetId, userEmail, ownerEmail, role);
     }
 
 

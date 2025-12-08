@@ -54,7 +54,7 @@ export class FakeSnippetOperations implements SnippetOperations {
     })
   }
 
-  shareSnippet(snippetId: string): Promise<Snippet> {
+  shareSnippet(snippetId: string, userId: string, role: string): Promise<Snippet> {
     return new Promise(resolve => {
       // @ts-expect-error, it will always find it in the fake store
       setTimeout(() => resolve(this.fakeStore.getSnippetById(snippetId)), DELAY)
