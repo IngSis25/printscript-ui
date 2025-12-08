@@ -138,11 +138,20 @@ export const useModifyLintingRules = ({onSuccess}: { onSuccess: () => void }) =>
     );
 }
 
-export const useFormatSnippet = () => {
+export const useFormatSnippet = (snippetId?: string) => {
     const snippetOperations = useSnippetsOperations();
 
-    return useMutation<string, Error, string>(
-        snippetContent => snippetOperations.formatSnippet(snippetContent)
+    return useMutation<{ content: string }, Error, void>(
+        () => {
+            // Get current snippet content if snippetId is provided
+            if (snippetId) {
+                return snippetOperations.getSnippetById(snippetId).then(snippet => {
+                    if (!snippet) throw new Error("Snippet not found");
+                    return snippetOperations.formatSnippet(snippet.content).then(content => ({ content }));
+                });
+            }
+            throw new Error("Snippet ID is required");
+        }
     );
 }
 
@@ -162,4 +171,12 @@ export const useGetFileTypes = () => {
     const snippetOperations = useSnippetsOperations();
 
     return useQuery<FileType[], Error>('fileTypes', () => snippetOperations.getFileTypes());
+}
+
+export const useRunSnippet = (snippetId: string) => {
+    const snippetOperations = useSnippetsOperations();
+
+    return useMutation<{ outputs: string[] }, Error, { inputs?: string[] }>(
+        ({ inputs }) => snippetOperations.runSnippet(snippetId, inputs).then((outputs: string[]) => ({ outputs }))
+    );
 }

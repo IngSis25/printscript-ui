@@ -43,11 +43,13 @@ export const AddSnippetModal = ({open, onClose, defaultSnippet}: {
     }, [fileTypes, loadingFileTypes, fileTypesError]);
 
     const handleCreateSnippet = async () => {
+        const selectedFileType = fileTypes?.find((f) => f.language === language);
         const newSnippet: CreateSnippet = {
             name: snippetName,
             content: code,
             language: language,
-            extension: fileTypes?.find((f) => f.language === language)?.extension ?? "prs"
+            extension: selectedFileType?.extension ?? "prs",
+            version: selectedFileType?.version ?? "1.1",
         }
         await createSnippet(newSnippet);
         onClose();

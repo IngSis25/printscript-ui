@@ -39,4 +39,8 @@ export interface SnippetOperations {
   modifyFormatRule(newRules: Rule[]): Promise<Rule[]>
 
   modifyLintingRule(newRules: Rule[]): Promise<Rule[]>
+
+  runSnippet(snippetId: string, inputs?: string[]): Promise<string[]>
+
+  downloadSnippet(snippetId: string, includeMetadata: boolean): Promise<void>
 }

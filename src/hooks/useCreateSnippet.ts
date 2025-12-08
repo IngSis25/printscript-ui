@@ -9,6 +9,7 @@ export const useCreateSnippet = async (
     content: string,
     language: string,
     extension: string,
+    version: string,
     token: string,
     ownerEmail?: string
 ): Promise<SnippetWithErr> => {
@@ -18,6 +19,7 @@ export const useCreateSnippet = async (
             content,
             language,
             extension,
+            version,
             owner: ownerEmail
         }, {
             headers: {

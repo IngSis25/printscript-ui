@@ -7,13 +7,12 @@ import {PaginatedUsers} from "./users.ts";
 import {useCreateSnippet} from "../hooks/useCreateSnippet.ts";
 import {CreateSnippet, PaginatedSnippets, Snippet, UpdateSnippet} from "./snippet.ts";
 import {User} from "@auth0/auth0-react";
-import {VITE_AUTH0_AUDIENCE} from "./constants.ts";
+import {VITE_AUTH0_AUDIENCE, RUNNER_SERVICE_URL} from "./constants.ts";
 import {fetchFileTypes} from "../hooks/fetchFileTypes.ts";
 import {fetchSnippetById} from "../hooks/fetchSnippetById.ts";
 import {fetchUserSnippets} from "../hooks/fetchUserSnippets.ts";
 import {fetchUpdateSnippet} from "../hooks/fetchUpdateSnippet.ts";
 import {fetchShareSnippet} from "../hooks/fetchShareSnippets.ts";
-import {axiosInstance} from "../hooks/axios.config.ts";
 import {fetchUserFriends} from "../hooks/fetchUserFriends.ts";
 
 const options = {
@@ -22,11 +21,71 @@ const options = {
     },
 };
 
+type AccessTokenFetcher = (options?: { authorizationParams?: { audience?: string } }) => Promise<string>;
+type ApiErrorWithDiagnostics = Error & { status?: number; code?: string; diagnostics?: unknown[] };
+
 export class SnippetServiceOperations implements SnippetOperations {
     private user?: User;
 
-    constructor(user?: User, private readonly getAccessTokenSilently?) {
+    constructor(
+        user?: User,
+        private readonly getAccessTokenSilently?: AccessTokenFetcher,
+    ) {
         this.user = user
+    }
+
+    /**
+     * Wrapper para fetch con token de Auth0 sin usar localStorage.
+     * Construye headers y propaga errores HTTP con el cuerpo parseado si es posible.
+     */
+    private async fetchWithAuth(path: string, optionsReq: RequestInit = {}): Promise<Response> {
+        const isFormData = optionsReq.body instanceof FormData;
+        const headers: Record<string, string> = {
+            ...(optionsReq.headers as Record<string, string>),
+        };
+
+        if (!isFormData && optionsReq.body !== undefined && !headers["Content-Type"]) {
+            headers["Content-Type"] = "application/json";
+        }
+
+        if (this.getAccessTokenSilently) {
+            try {
+                const token = await this.getAccessTokenSilently({
+                    authorizationParams: { audience: VITE_AUTH0_AUDIENCE },
+                });
+                if (token && token !== "undefined" && token !== "null") {
+                    headers["Authorization"] = `Bearer ${token}`;
+                }
+            } catch (err) {
+                console.warn("No se pudo obtener token silenciosamente", err);
+            }
+        }
+
+        const url = path.startsWith("http") ? path : path;
+        const res = await fetch(url, {...optionsReq, headers});
+
+        if (!res.ok) {
+            const raw = await res.text().catch(() => "");
+            let parsed: unknown = undefined;
+            try {
+                parsed = raw ? JSON.parse(raw) : undefined;
+            } catch {
+                // cuerpo no era json
+            }
+            const err: ApiErrorWithDiagnostics = new Error(
+                (parsed as { message?: string } | undefined)?.message || `HTTP ${res.status} ${url}`,
+            );
+            err.status = res.status;
+            if ((parsed as { code?: string } | undefined)?.code) {
+                err.code = (parsed as { code?: string }).code;
+            }
+            if (Array.isArray((parsed as { diagnostics?: unknown[] } | undefined)?.diagnostics)) {
+                err.diagnostics = (parsed as { diagnostics?: unknown[] }).diagnostics;
+            }
+            throw err;
+        }
+
+        return res;
     }
 
     async listSnippetDescriptors(page: number, pageSize: number, snippetName?: string | undefined): Promise<PaginatedSnippets> {
@@ -38,9 +97,7 @@ export class SnippetServiceOperations implements SnippetOperations {
         try {
             // Asegurar que tenemos el token antes de hacer la petición
             if (this.getAccessTokenSilently) {
-                const token = await this.getAccessTokenSilently(options);
-                localStorage.setItem('access_token', token);
-                console.log("Token obtained and stored for listSnippetDescriptors");
+                await this.getAccessTokenSilently(options);
             }
             return await fetchUserSnippets(this.user.sub, page, pageSize, snippetName);
         } catch (error) {
@@ -50,13 +107,14 @@ export class SnippetServiceOperations implements SnippetOperations {
     }
 
     createSnippet = async (createSnippet: CreateSnippet): Promise<Snippet> => {
+        if (!this.getAccessTokenSilently) {
+            throw new Error("No se puede obtener el token de autenticación");
+        }
         const token = await this.getAccessTokenSilently(options);
-        localStorage.setItem('access_token', token);
-        const {name, content, language, extension} = createSnippet;
+        const {name, content, language, extension, version} = createSnippet;
         const owner = this.user?.email
         try {
-            console.log("Token:" + localStorage.getItem('access_token'));
-            return await useCreateSnippet(name, content, language, extension, token, owner);
+            return await useCreateSnippet(name, content, language, extension, version, token, owner);
         } catch (error) {
             if (error instanceof Error) {
                 throw new Error("Failed to create snippet: " + error.message);
@@ -75,9 +133,7 @@ export class SnippetServiceOperations implements SnippetOperations {
         try {
             // Asegurar que tenemos el token antes de hacer la petición
             if (this.getAccessTokenSilently) {
-                const token = await this.getAccessTokenSilently(options);
-                localStorage.setItem('access_token', token);
-                console.log("Token obtained and stored");
+                await this.getAccessTokenSilently(options);
             }
             return await fetchSnippetById(id);
         } catch (error) {
@@ -168,6 +224,53 @@ export class SnippetServiceOperations implements SnippetOperations {
     modifyLintingRule(newRules: Rule[]): Promise<Rule[]> {
         console.log(newRules);
         throw new Error("Method not implemented.");
+    }
+
+    async downloadSnippet(snippetId: string, includeMetadata: boolean): Promise<void> {
+        console.log(snippetId, includeMetadata);
+        throw new Error("Method not implemented.");
+    }
+
+    async runSnippet(snippetId: string, inputs?: string[]): Promise<string[]> {
+        // inputs se reserva para uso futuro cuando el runner-service soporte inputs interactivos
+        console.log("Running snippet:", snippetId, "with inputs:", inputs);
+        try {
+            if (!this.getAccessTokenSilently) {
+                throw new Error("No se encontró método para obtener token. Por favor, inicia sesión.");
+            }
+
+            // Obtener el snippet para tener código y versión
+            const snippet = await this.getSnippetById(snippetId);
+            if (!snippet) {
+                throw new Error("Snippet no encontrado");
+            }
+
+            const code = snippet.content ?? "";
+            // Hardcodear temporalmente a versión 1.1
+            const version = "1.1";
+
+            // Llamar al runner-service para ejecutar el snippet (usando token obtenido al vuelo)
+            const response = await this.fetchWithAuth(`${RUNNER_SERVICE_URL}/api/printscript/interpret`, {
+                method: "POST",
+                body: JSON.stringify({
+                    version: version,
+                    code: code,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Error al ejecutar snippet: ${response.status} - ${errorText}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error("Error in runSnippet:", error);
+            if (error instanceof Error) {
+                throw error;
+            }
+            throw new Error("Error desconocido al ejecutar snippet");
+        }
     }
 
 }
