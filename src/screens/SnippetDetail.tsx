@@ -16,7 +16,6 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import {
     useUpdateSnippetById,
-    useGetUsers,
     useSnippetsOperations,
     useRunSnippet,
 } from "../utils/queries.tsx";
@@ -99,8 +98,6 @@ export const SnippetDetail = (props: SnippetDetailProps) => {
             },
         });
 
-    const { data: usersData, isLoading: loadingUsers } = useGetUsers();
-
     useEffect(() => {
         if (snippet) {
             setCode(snippet.content ?? "");
@@ -113,10 +110,11 @@ export const SnippetDetail = (props: SnippetDetailProps) => {
         }
     }, [formatSnippetData]);
 
-    async function handleShareSnippet(userEmail: string) {
+    async function handleShareSnippet(userEmail: string, role: string) {
         shareSnippet({
             snippetId: id,
             userEmail: userEmail,
+            role: role,
         });
     }
 
@@ -159,7 +157,7 @@ export const SnippetDetail = (props: SnippetDetailProps) => {
                 <CloseIcon style={{ cursor: "pointer" }} onClick={handleCloseModal} />
             </Box>
 
-            {isLoading || loadingUsers ? (
+            {isLoading ? (
                 <>
                     <Typography fontWeight={"bold"} mb={2} variant="h4">
                         Loading...
@@ -211,37 +209,39 @@ export const SnippetDetail = (props: SnippetDetailProps) => {
                             </IconButton>
                         </Tooltip>
 
-                        <Tooltip title={"Save changes"}>
-                            <IconButton
-                                color={"primary"}
-                                onClick={() =>
-                                    updateSnippet(
-                                        { id: id, updateSnippet: { content: code } },
-                                        {
-                                            onError: (error: any) => {
-                                                const e = error as {
-                                                    message?: string;
-                                                    diagnostics?: any[];
-                                                };
-                                                const diag = e.diagnostics?.[0];
+                        <Tooltip title={snippet?.userRole === "Viewer" ? "No tenés permisos para editar este snippet" : "Save changes"}>
+                            <span>
+                                <IconButton
+                                    color={"primary"}
+                                    onClick={() =>
+                                        updateSnippet(
+                                            { id: id, updateSnippet: { content: code } },
+                                            {
+                                                onError: (error: any) => {
+                                                    const e = error as {
+                                                        message?: string;
+                                                        diagnostics?: any[];
+                                                    };
+                                                    const diag = e.diagnostics?.[0];
 
-                                                if (diag) {
-                                                    setValidationError(
-                                                        `Regla: ${diag.ruleId} – ${diag.message} (línea ${diag.line}, columna ${diag.col})`
-                                                    );
-                                                } else {
-                                                    setValidationError(
-                                                        e.message ?? "Error al guardar el snippet"
-                                                    );
-                                                }
-                                            },
-                                        }
-                                    )
-                                }
-                                disabled={isUpdateSnippetLoading || snippet?.content === code}
-                            >
-                                <Save />
-                            </IconButton>
+                                                    if (diag) {
+                                                        setValidationError(
+                                                            `Regla: ${diag.ruleId} – ${diag.message} (línea ${diag.line}, columna ${diag.col})`
+                                                        );
+                                                    } else {
+                                                        setValidationError(
+                                                            e.message ?? "Error al guardar el snippet"
+                                                        );
+                                                    }
+                                                },
+                                            }
+                                        )
+                                    }
+                                    disabled={isUpdateSnippetLoading || snippet?.content === code || snippet?.userRole === "Viewer"}
+                                >
+                                    <Save />
+                                </IconButton>
+                            </span>
                         </Tooltip>
 
                         <Tooltip title={"Delete"}>
@@ -275,16 +275,27 @@ export const SnippetDetail = (props: SnippetDetailProps) => {
                                 onValueChange={(code) => setCode(code)}
                                 highlight={(code) => highlight(code, languages.js, "javascript")}
                                 maxLength={1000}
+                                readOnly={snippet?.userRole === "Viewer"}
                                 style={{
                                     minHeight: "360px",
                                     maxHeight: "500px",
                                     overflow: "auto",
                                     fontFamily: "monospace",
                                     fontSize: 17,
+                                    opacity: snippet?.userRole === "Viewer" ? 0.7 : 1,
+                                    cursor: snippet?.userRole === "Viewer" ? "not-allowed" : "text",
                                 }}
                             />
                         </Bòx>
                     </Box>
+                    
+                    {snippet?.userRole === "Viewer" && (
+                        <Box mb={2}>
+                            <Alert severity="info">
+                                Tenés permisos de solo lectura (Viewer). No podés editar este snippet.
+                            </Alert>
+                        </Box>
+                    )}
 
                     <Box pt={2} flex={1} marginTop={2}>
                         <Alert severity="info">Output</Alert>
@@ -328,8 +339,6 @@ export const SnippetDetail = (props: SnippetDetailProps) => {
                 open={shareModalOppened}
                 onClose={() => setShareModalOppened(false)}
                 onShare={handleShareSnippet}
-                users={usersData?.items}
-                usersLoading={loadingUsers}
             />
 
             <TestSnippetModal
@@ -338,12 +347,9 @@ export const SnippetDetail = (props: SnippetDetailProps) => {
                 snippetId={id}
             />
 
-            <DeleteConfirmationModal
-                open={deleteConfirmationModalOpen}
-                onClose={() => setDeleteConfirmationModalOpen(false)}
-                id={snippet?.id ?? ""}
-                setCloseDetails={handleCloseModal}
-            />
+            <DeleteConfirmationModal open={deleteConfirmationModalOpen}
+                                     onClose={() => setDeleteConfirmationModalOpen(false)}
+                                     id={snippet?.id ?? ""} setCloseDetails={handleCloseModal}/>
         </Box>
     );
 };

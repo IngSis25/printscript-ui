@@ -24,6 +24,7 @@ export type UpdateSnippet = {
 
 export type Snippet = CreateSnippet & {
     id: string
+    userRole?: string  // "Editor", "Viewer", "Owner", or undefined if not loaded
 } & SnippetStatus
 
 export type SnippetWithErr = Snippet & {
@@ -34,6 +35,7 @@ type SnippetStatus = {
     status: ComplianceEnum;
     author: string;
     owner: string;
+    compliance?: ComplianceEnum; // Para mostrar en la tabla
 }
 export type SnippetWithLintWarnings = Snippet & {
     lintWarnings: string[];

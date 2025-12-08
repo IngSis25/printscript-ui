@@ -3,11 +3,11 @@ import {toast} from "react-toastify";
 import axios from "axios";
 import {Snippet} from "../utils/snippet.ts";
 
-const fetchShareSnippet = async (snippetId: string, userEmail: string | undefined, ownerEmail: string | undefined): Promise<Snippet> => {
+const fetchShareSnippet = async (snippetId: string, userEmail: string | undefined, ownerEmail: string | undefined, role: string | undefined = "Editor" ): Promise<Snippet> => {
     try {
         const response = await axiosInstance.post(
             `api/snippets/share/${snippetId}`,
-            { fromEmail: ownerEmail, toEmail: userEmail }
+            { fromEmail: ownerEmail, toEmail: userEmail, role: role }
         );
         toast.success('Snippet shared successfully!');
         return response.data;
