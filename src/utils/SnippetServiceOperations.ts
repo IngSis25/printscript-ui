@@ -14,6 +14,7 @@ import {fetchUserSnippets} from "../hooks/fetchUserSnippets.ts";
 import {fetchUpdateSnippet} from "../hooks/fetchUpdateSnippet.ts";
 import {fetchShareSnippet} from "../hooks/fetchShareSnippets.ts";
 import {fetchUserFriends} from "../hooks/fetchUserFriends.ts";
+import {fetchDownloadSnippet} from "../hooks/fetchDownloadSnippet.ts";
 import {axiosInstance} from "../hooks/axios.config.ts";
 
 const options = {
@@ -239,8 +240,7 @@ export class SnippetServiceOperations implements SnippetOperations {
     }
 
     async downloadSnippet(snippetId: string, includeMetadata: boolean): Promise<void> {
-        console.log(snippetId, includeMetadata);
-        throw new Error("Method not implemented.");
+        return await fetchDownloadSnippet(snippetId, includeMetadata);
     }
 
      async runSnippet(snippetId: string, inputs?: string[]): Promise<string[]> {
