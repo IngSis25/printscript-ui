@@ -27,11 +27,9 @@ export const TestSnippetModal = ({open, onClose, snippetId}: TestSnippetModalPro
     const handleAddTestCase = async (testCase: Partial<TestCase>) => {
         try {
             const savedTestCase = await postTestCase.mutateAsync(testCase);
-            await queryClient.invalidateQueries(['testCases', snippetId]); // Invalida la cache para refrescar automáticamente
+            await queryClient.invalidateQueries(['testCases', snippetId]);
             toast.success("Test guardado correctamente");
-            // Si es un test nuevo (sin ID), cambiar al tab del test recién guardado
             if (!testCase.id && savedTestCase?.id) {
-                // Esperar a que se actualice la lista de tests
                 setTimeout(() => {
                     const updatedTests = queryClient.getQueryData<TestCase[]>(['testCases', snippetId]);
                     if (updatedTests) {

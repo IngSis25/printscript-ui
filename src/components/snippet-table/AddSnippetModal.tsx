@@ -28,6 +28,7 @@ export const AddSnippetModal = ({open, onClose, defaultSnippet}: {
     onClose: () => void,
     defaultSnippet?: CreateSnippetWithLang
 }) => {
+    const [languageId, setLanguageId] = useState(defaultSnippet?.language ?? "1");
     const [language, setLanguage] = useState(defaultSnippet?.language ?? "Printscript");
     const [version, setVersion] = useState(defaultSnippet?.version ?? "");
     const [code, setCode] = useState(defaultSnippet?.content ?? "");
@@ -42,7 +43,7 @@ export const AddSnippetModal = ({open, onClose, defaultSnippet}: {
         return fileTypes
             ?.filter((f) => f.language === language)
             .map((f) => ({ version: f.version, extension: f.extension, id: f.id }))
-            .filter((v, index, self) => 
+            .filter((v, index, self) =>
                 index === self.findIndex((t) => t.version === v.version)
             ) || [];
     }, [fileTypes, language]);
@@ -118,30 +119,25 @@ export const AddSnippetModal = ({open, onClose, defaultSnippet}: {
                 flexDirection: 'column',
                 gap: '16px'
             }}>
-                <InputLabel htmlFor="language">Language</InputLabel>
+                <InputLabel htmlFor="name">Language</InputLabel>
                 <Select
-                    labelId="language-select-label"
-                    id="language-select"
-                    value={language}
-                    onChange={(e: SelectChangeEvent<string>) => {
-                        setLanguage(e.target.value);
-                        setVersion(""); // Resetear versión al cambiar lenguaje
-                    }}
+                    labelId="demo-simple-select-label"
+                    id="demo-simple-select"
+                    value={languageId}
+                    label="Age"
+                    onChange={(e: SelectChangeEvent<string>) => setLanguageId(e.target.value)}
                     sx={{width: '50%'}}
-                    disabled={loadingFileTypes}
                 >
-                    {loadingFileTypes ? (
-                        <MenuItem disabled>Loading languages...</MenuItem>
-                    ) : fileTypesError ? (
-                        <MenuItem disabled>Error loading languages</MenuItem>
-                    ) : fileTypes && fileTypes.length > 0 ? (
-                        // Mostrar solo lenguajes únicos
-                        Array.from(new Set(fileTypes.map(x => x.language))).map(lang => (
-                            <MenuItem data-testid={`menu-option-${lang}`} key={lang}
-                                      value={lang}>{capitalize((lang))}</MenuItem>
+                    {(Array.isArray(fileTypes) && fileTypes.length > 0) ? (
+                        fileTypes.map((x) => (
+                            x && x.language ? (
+                                <MenuItem data-testid={`menu-option-${x.language}`} key={x.id} value={x.id}>
+                                    {capitalize(x.language)} {x.version}
+                                </MenuItem>
+                            ) : null
                         ))
                     ) : (
-                        <MenuItem disabled>No languages available</MenuItem>
+                        <MenuItem>No file types accepted</MenuItem>
                     )}
                 </Select>
             </Box>
