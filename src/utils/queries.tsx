@@ -71,15 +71,17 @@ export const useGetTestCases = (snippetId: string) => {
 
     const snippetOperations = useSnippetsOperations();
 
-    return useQuery<TestCase[] | undefined, Error>('testCases', () => snippetOperations.getTestCases(snippetId), {});
+    return useQuery<TestCase[] | undefined, Error>(['testCases', snippetId], () => snippetOperations.getTestCases(snippetId), {
+        enabled: !!snippetId,
+    });
 };
 
 
-export const usePostTestCase = () => {
-    const snippetOperations = useSnippetsOperations();
+export const usePostTestCase = (snippetId: string) => {
+    const snippetOperations = useSnippetsOperations()
 
     return useMutation<TestCase, Error, Partial<TestCase>>(
-        (tc) => snippetOperations.postTestCase(tc)
+        (tc) => snippetOperations.postTestCase(tc, snippetId)
     );
 };
 

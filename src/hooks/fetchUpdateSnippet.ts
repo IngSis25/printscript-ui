@@ -6,7 +6,7 @@ import {toast} from "react-toastify";
 
 const fetchUpdateSnippet = async (id: string, content: string): Promise<SnippetWithErr> => {
     try {
-        const response = await axiosInstance.put(`snippets/${id}`, {content})  // axiosInstance already has /api prefix
+        const response = await axiosInstance.put(`api/snippets/${id}`, {content})  // axiosInstance already has /api prefix
 
         const result = {
             id: response.data.id,

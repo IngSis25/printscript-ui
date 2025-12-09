@@ -165,14 +165,14 @@ export class SnippetServiceOperations implements SnippetOperations {
     //     }
     // }
 
-    async shareSnippet(snippetId: string, userEmail: string, role: string = "Editor"): Promise<Snippet> {
+    async shareSnippet(snippetId: string, userId: string, role: string): Promise<Snippet> {
         const ownerEmail = this.user?.email;
 
-        if (!userEmail) {
+        if (!userId) {
             throw new Error("User email not found");
         }
 
-        return await fetchShareSnippet(snippetId, userEmail, ownerEmail, role);
+        return await fetchShareSnippet(snippetId, userId, ownerEmail, role);
     }
 
 
@@ -184,30 +184,85 @@ export class SnippetServiceOperations implements SnippetOperations {
         throw new Error("Method not implemented.");
     }
 
-    getTestCases(snippetId: string): Promise<TestCase[]> {
-        console.log(snippetId);
-        throw new Error("Method not implemented.");
-    }
-
     formatSnippet(snippet: string): Promise<string> {
         console.log(snippet);
         throw new Error("Method not implemented.");
     }
 
-    postTestCase(testCase: Partial<TestCase>): Promise<TestCase> {
-        console.log(testCase);
-        throw new Error("Method not implemented.");
+    async getTestCases(snippetId: string): Promise<TestCase[]> {
+        try {
+            const response = await axiosInstance.get(`api/tests/snippet/${snippetId}`);
+            console.log("Respuesta del backend (getTestCases):", response.data);
+            // Convertir el id de Long (número) a string y asegurar que input/output sean arrays
+            const mapped = response.data.map((test: any) => {
+                const mappedTest = {
+                    id: String(test.id),
+                    name: test.name,
+                    input: Array.isArray(test.input) ? test.input : [],
+                    output: Array.isArray(test.output) ? test.output : [],
+                };
+                console.log("Test mapeado:", mappedTest);
+                return mappedTest;
+            });
+            return mapped;
+        } catch (error) {
+            console.error("Error fetching test cases:", error);
+            throw error;
+        }
     }
 
-    removeTestCase(id: string): Promise<string> {
-        console.log(id);
-        throw new Error("Method not implemented.");
+    async postTestCase(testCase: Partial<TestCase>, snippetId: string): Promise<TestCase> {
+        if (!snippetId) {
+            throw new Error("Test case must have a snippet id");
+        }
+        // Asegurar que input y output sean arrays (pueden ser vacíos)
+        const testCaseToSend = {
+            name: testCase.name || "",
+            input: Array.isArray(testCase.input) ? testCase.input : [],
+            output: Array.isArray(testCase.output) ? testCase.output : [],
+        };
+        console.log("Enviando test case al backend:", testCaseToSend);
+        const response = await axiosInstance.post(`api/tests/snippet/${snippetId}`, testCaseToSend);
+        console.log("Respuesta del backend:", response.data);
+        // Convertir el id de Long (número) a string
+        const result = {
+            id: String(response.data.id),
+            name: response.data.name,
+            input: Array.isArray(response.data.input) ? response.data.input : [],
+            output: Array.isArray(response.data.output) ? response.data.output : [],
+        };
+        console.log("Test case mapeado:", result);
+        return result;
+    }
+
+    async removeTestCase(id: string): Promise<string> {
+        const response = await axiosInstance.delete(`api/tests/${id}`);
+        return response.data;
+    }
+
+
+    async testSnippet(testCase: Partial<TestCase>): Promise<TestCaseResult> {
+        if (!testCase.id) {
+            throw new Error("Test case ID is required");
+        }
+        try {
+            // El id viene como string del frontend, pero el backend espera Long
+            const testId = testCase.id;
+            const response = await axiosInstance.post<string>(`api/tests/${testId}/run`);
+            const result = response.data.trim().toLowerCase();
+            if (result === "success" || result === "fail") {
+                return result as TestCaseResult;
+            }
+            // Si el backend retorna algo inesperado, asumimos que falló
+            return "fail";
+        } catch (error) {
+            console.error("Error ejecutando test:", error);
+            throw error;
+        }
     }
 
     async deleteSnippet(id: string): Promise<string> {
         try {
-            console.log("🧹 Deleting snippet with id:", id);  // LOG CLAVE
-
             await axiosInstance.post(`/api/snippets/delete/${id}`);
             return `Snippet of id: ${id} deleted successfully`;
         } catch (error) {
@@ -219,11 +274,6 @@ export class SnippetServiceOperations implements SnippetOperations {
         }
     }
 
-
-    testSnippet(testCase: Partial<TestCase>): Promise<TestCaseResult> {
-        console.log(testCase);
-        throw new Error("Method not implemented.");
-    }
 
     async getFileTypes(): Promise<FileType[]> {
         return fetchFileTypes();
