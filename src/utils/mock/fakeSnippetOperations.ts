@@ -57,7 +57,7 @@ export class FakeSnippetOperations implements SnippetOperations {
   shareSnippet(snippetId: string, userId: string, role: string): Promise<Snippet> {
     return new Promise(resolve => {
       // @ts-expect-error, it will always find it in the fake store
-      setTimeout(() => resolve(this.fakeStore.getSnippetById(snippetId)), DELAY)
+      setTimeout(() => resolve(this.fakeStore.getSnippetById(snippetId)!), DELAY)
     })
   }
 
@@ -131,6 +131,33 @@ export class FakeSnippetOperations implements SnippetOperations {
   modifyLintingRule(newRules: Rule[]): Promise<Rule[]> {
     return new Promise(resolve => {
       setTimeout(() => resolve(this.fakeStore.modifyLintingRule(newRules)), DELAY)
+    })
+  }
+
+  runSnippet(snippetId: string, inputs?: string[]): Promise<string[]> {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        const snippet = this.fakeStore.getSnippetById(snippetId)
+        if (snippet) {
+          resolve(["Output from snippet execution"])
+        } else {
+          resolve([])
+        }
+      }, DELAY)
+    })
+  }
+
+  downloadSnippet(snippetId: string, includeMetadata: boolean): Promise<void> {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        // Simular descarga del snippet
+        const snippet = this.fakeStore.getSnippetById(snippetId)
+        if (snippet) {
+          // En un caso real, aquí se descargaría el archivo
+          console.log("Downloading snippet:", snippetId, "includeMetadata:", includeMetadata)
+        }
+        resolve()
+      }, DELAY)
     })
   }
 }
