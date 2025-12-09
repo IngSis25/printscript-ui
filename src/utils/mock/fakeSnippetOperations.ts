@@ -54,14 +54,15 @@ export class FakeSnippetOperations implements SnippetOperations {
     })
   }
 
-  shareSnippet(snippetId: string, userId: string, role: string): Promise<Snippet> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  shareSnippet(snippetId: string, _userId: string, _role: string): Promise<Snippet> {
     return new Promise(resolve => {
-      // @ts-expect-error, it will always find it in the fake store
       setTimeout(() => resolve(this.fakeStore.getSnippetById(snippetId)!), DELAY)
     })
   }
 
-  getFormatRules(version?: string): Promise<Rule[]> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getFormatRules(_version?: string): Promise<Rule[]> {
     return new Promise(resolve => {
       setTimeout(() => resolve(this.fakeStore.getFormatRules()), DELAY)
     })
@@ -134,7 +135,8 @@ export class FakeSnippetOperations implements SnippetOperations {
     })
   }
 
-  runSnippet(snippetId: string, inputs?: string[]): Promise<string[]> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  runSnippet(snippetId: string, _inputs?: string[]): Promise<string[]> {
     return new Promise(resolve => {
       setTimeout(() => {
         const snippet = this.fakeStore.getSnippetById(snippetId)
