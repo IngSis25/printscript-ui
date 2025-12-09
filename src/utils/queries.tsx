@@ -7,6 +7,7 @@ import {FileType} from "../types/FileType.ts";
 import {Rule} from "../types/Rule.ts";
  import {useAuth0} from "@auth0/auth0-react";
 import {SnippetServiceOperations} from "./SnippetServiceOperations.ts";
+import {queryClient} from "../App.tsx";
 
 
 
@@ -145,15 +146,19 @@ export const useFormatSnippet = (snippetId?: string) => {
     const snippetOperations = useSnippetsOperations();
 
     return useMutation<{ content: string }, Error, void>(
-        () => {
-            // Get current snippet content if snippetId is provided
-            if (snippetId) {
-                return snippetOperations.getSnippetById(snippetId).then(snippet => {
-                    if (!snippet) throw new Error("Snippet not found");
-                    return snippetOperations.formatSnippet(snippet.content).then(content => ({ content }));
-                });
+        async () => {
+            if (!snippetId) {
+                throw new Error("Snippet ID is required");
             }
-            throw new Error("Snippet ID is required");
+            
+            const formattedContent = await snippetOperations.formatSnippet(snippetId);
+            return { content: formattedContent };
+        },
+        {
+            onSuccess: () => {
+                // Invalidar la query del snippet para recargarlo
+                queryClient.invalidateQueries(["snippet", snippetId]);
+            }
         }
     );
 }
