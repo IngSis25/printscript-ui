@@ -105,30 +105,35 @@ const INITIAL_FORMATTING_RULES: Rule[] = [
   }
 ]
 
+// Reglas reales de linter según PrintScript:
+// - UnusedVariableCheck (siempre activa)
+// - NamingFormatCheck (configurable, por ejemplo camelCase)
+// - PrintUseCheck (boolean)
+// - ReadInputCheck (boolean)
 const INITIAL_LINTING_RULES: Rule[] = [
   {
-    id: '1',
-    name: "no-expressions-in-print-line",
+    id: "UnusedVariableCheck",
+    name: "UnusedVariableCheck",
     isActive: true,
-    value: null
+    value: null,
   },
   {
-    id: '2',
-    name: "no-unused-vars",
-    isActive: true,
-    value: null
-  },
-  {
-    id: '3',
-    name: "no-undef-vars",
+    id: "NamingFormatCheck",
+    name: "NamingFormatCheck",
     isActive: false,
-    value: null
+    value: "camelCase", // camelCase o snake_case
   },
   {
-    id: '4',
-    name: "no-unused-params",
+    id: "PrintUseCheck",
+    name: "PrintUseCheck",
     isActive: false,
-    value: null
+    value: null, // boolean
+  },
+  {
+    id: "ReadInputCheck",
+    name: "ReadInputCheck",
+    isActive: false,
+    value: null, // boolean
   },
 ]
 

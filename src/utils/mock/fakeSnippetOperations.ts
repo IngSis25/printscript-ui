@@ -1,6 +1,6 @@
 import {SnippetOperations} from '../snippetOperations'
 import {FakeSnippetStore} from './fakeSnippetStore'
-import {CreateSnippet, PaginatedSnippets, Snippet, UpdateSnippet} from '../snippet'
+import {CreateSnippet, PaginatedSnippets, Snippet, SnippetWithErr, UpdateSnippet} from '../snippet'
 import autoBind from 'auto-bind'
 import {PaginatedUsers} from "../users.ts";
 import {TestCase} from "../../types/TestCase.ts";
@@ -17,9 +17,12 @@ export class FakeSnippetOperations implements SnippetOperations {
     autoBind(this)
   }
 
-  createSnippet(createSnippet: CreateSnippet): Promise<Snippet> {
+  createSnippet(createSnippet: CreateSnippet): Promise<SnippetWithErr> {
     return new Promise(resolve => {
-      setTimeout(() => resolve(this.fakeStore.createSnippet(createSnippet)), DELAY)
+      setTimeout(() => {
+        const created = this.fakeStore.createSnippet(createSnippet) as Snippet & { errors?: string[] }
+        resolve({...created, errors: created.errors ?? []})
+      }, DELAY)
     })
   }
 
@@ -42,9 +45,12 @@ export class FakeSnippetOperations implements SnippetOperations {
     })
   }
 
-  updateSnippetById(id: string, updateSnippet: UpdateSnippet): Promise<Snippet> {
+  updateSnippetById(id: string, updateSnippet: UpdateSnippet): Promise<SnippetWithErr> {
     return new Promise(resolve => {
-      setTimeout(() => resolve(this.fakeStore.updateSnippet(id, updateSnippet)), DELAY)
+      setTimeout(() => {
+        const updated = this.fakeStore.updateSnippet(id, updateSnippet) as Snippet & { errors?: string[] }
+        resolve({...updated, errors: updated.errors ?? []})
+      }, DELAY)
     })
   }
 

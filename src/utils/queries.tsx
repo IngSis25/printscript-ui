@@ -1,5 +1,5 @@
 import {useMutation, UseMutationResult, useQuery} from 'react-query';
-import {CreateSnippet, PaginatedSnippets, Snippet, UpdateSnippet} from './snippet.ts';
+import {CreateSnippet, PaginatedSnippets, SnippetWithErr, Snippet, UpdateSnippet} from './snippet.ts';
 import {SnippetOperations} from "./snippetOperations.ts";
 import {PaginatedUsers} from "./users.ts";
 import {TestCase} from "../types/TestCase.ts";
@@ -36,17 +36,17 @@ export const useGetSnippetById = (id: string) => {
 
 export const useCreateSnippet = ({onSuccess}: {
     onSuccess: () => void
-}): UseMutationResult<Snippet, Error, CreateSnippet> => {
+}): UseMutationResult<SnippetWithErr, Error, CreateSnippet> => {
     const snippetOperations = useSnippetsOperations();
-    return useMutation<Snippet, Error, CreateSnippet>(createSnippet => snippetOperations.createSnippet(createSnippet), {onSuccess});
+    return useMutation<SnippetWithErr, Error, CreateSnippet>(createSnippet => snippetOperations.createSnippet(createSnippet), {onSuccess});
 };
 
-export const useUpdateSnippetById = ({onSuccess}: { onSuccess: () => void }): UseMutationResult<Snippet, Error, {
+export const useUpdateSnippetById = ({onSuccess}: { onSuccess: () => void }): UseMutationResult<SnippetWithErr, Error, {
     id: string;
     updateSnippet: UpdateSnippet
 }> => {
     const snippetOperations = useSnippetsOperations();
-    return useMutation<Snippet, Error, { id: string; updateSnippet: UpdateSnippet }>(
+    return useMutation<SnippetWithErr, Error, { id: string; updateSnippet: UpdateSnippet }>(
         ({id, updateSnippet}) => snippetOperations.updateSnippetById(id, updateSnippet), {
             onSuccess,
         }

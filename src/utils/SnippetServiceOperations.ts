@@ -5,7 +5,7 @@ import {Rule} from "../types/Rule.ts";
 import {FileType} from "../types/FileType.ts";
 import {PaginatedUsers} from "./users.ts";
 import {useCreateSnippet} from "../hooks/useCreateSnippet.ts";
-import {CreateSnippet, PaginatedSnippets, Snippet, UpdateSnippet} from "./snippet.ts";
+import {CreateSnippet, PaginatedSnippets, Snippet, SnippetWithErr, UpdateSnippet} from "./snippet.ts";
 import {User} from "@auth0/auth0-react";
 import {VITE_AUTH0_AUDIENCE, RUNNER_SERVICE_URL, SNIPPETS_SERVICE_URL} from "./constants.ts";
 import {fetchFileTypes} from "../hooks/fetchFileTypes.ts";
@@ -108,7 +108,7 @@ export class SnippetServiceOperations implements SnippetOperations {
         }
     }
 
-    createSnippet = async (createSnippet: CreateSnippet): Promise<Snippet> => {
+    createSnippet = async (createSnippet: CreateSnippet): Promise<SnippetWithErr> => {
         if (!this.getAccessTokenSilently) {
             throw new Error("No se puede obtener el token de autenticación");
         }
@@ -153,7 +153,7 @@ export class SnippetServiceOperations implements SnippetOperations {
         }
     }
 
-    updateSnippetById(id: string, updateSnippet: UpdateSnippet): Promise<Snippet> {
+    updateSnippetById(id: string, updateSnippet: UpdateSnippet): Promise<SnippetWithErr> {
         console.log(id, updateSnippet);
         return fetchUpdateSnippet(id, updateSnippet.content);
     }
@@ -229,8 +229,21 @@ export class SnippetServiceOperations implements SnippetOperations {
         return await response.json();
     }
 
-    getLintingRules(): Promise<Rule[]> {
-        throw new Error("Method not implemented.");
+    async getLintingRules(version?: string): Promise<Rule[]> {
+        if (!this.getAccessTokenSilently) {
+            throw new Error("No se puede obtener el token de autenticación");
+        }
+
+        const versionToUse = version ?? "1.1";
+
+        const response = await this.fetchWithAuth(
+            `${SNIPPETS_SERVICE_URL}/api/rules/lint?version=${versionToUse}`,
+            {
+                method: "GET",
+            }
+        );
+
+        return await response.json();
     }
 
     async formatSnippet(snippetId: string): Promise<string> {
@@ -254,7 +267,7 @@ export class SnippetServiceOperations implements SnippetOperations {
             const response = await axiosInstance.get(`api/tests/snippet/${snippetId}`);
             console.log("Respuesta del backend (getTestCases):", response.data);
             // Convertir el id de Long (número) a string y asegurar que input/output sean arrays
-            const mapped = response.data.map((test: any) => {
+            const mapped = response.data.map((test: { id: unknown; name: unknown; input: unknown; output: unknown }) => {
                 const mappedTest = {
                     id: String(test.id),
                     name: test.name,
@@ -360,9 +373,25 @@ export class SnippetServiceOperations implements SnippetOperations {
         return await response.json();
     }
 
-    modifyLintingRule(newRules: Rule[]): Promise<Rule[]> {
-        console.log(newRules);
-        throw new Error("Method not implemented.");
+    async modifyLintingRule(newRules: Rule[]): Promise<Rule[]> {
+        if (!this.getAccessTokenSilently) {
+            throw new Error("No se puede obtener el token de autenticación");
+        }
+
+        const response = await this.fetchWithAuth(
+            `${SNIPPETS_SERVICE_URL}/api/rules/lint`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    rules: newRules,
+                }),
+            }
+        );
+
+        return await response.json();
     }
 
     async downloadSnippet(snippetId: string, includeMetadata: boolean): Promise<void> {

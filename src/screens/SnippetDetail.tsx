@@ -93,7 +93,7 @@ export const SnippetDetail = (props: SnippetDetailProps) => {
     const { mutate: updateSnippet, isLoading: isUpdateSnippetLoading } =
         useUpdateSnippetById({
             onSuccess: () => {
-                setValidationError(null);
+                // El manejo de alerta se hace en el mutate específico con los datos devueltos
                 queryClient.invalidateQueries(["snippet", id]);
             },
         });
@@ -217,6 +217,15 @@ export const SnippetDetail = (props: SnippetDetailProps) => {
                                         updateSnippet(
                                             { id: id, updateSnippet: { content: code } },
                                             {
+                                                onSuccess: (res) => {
+                                                    if (Array.isArray(res.errors) && res.errors.length > 0) {
+                                                        setValidationError(
+                                                            `Errores de sintaxis: ${res.errors.join("; ")}`
+                                                        );
+                                                    } else {
+                                                        setValidationError(null);
+                                                    }
+                                                },
                                                 onError: (error: any) => {
                                                     const e = error as {
                                                         message?: string;
