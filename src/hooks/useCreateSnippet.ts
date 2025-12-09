@@ -11,17 +11,25 @@ export const useCreateSnippet = async (
     extension: string,
     version: string,
     token: string,
-    ownerEmail?: string
+    ownerEmail?: string,
+    languageId?: string
 ): Promise<SnippetWithErr> => {
     try {
-        const response = await axiosInstance.post("/api/snippets", {
+        const requestBody: any = {
             name,
             content,
             language,
             extension,
             version,
             owner: ownerEmail
-        }, {
+        };
+        
+        // Si tenemos el languageId, agregarlo al request para evitar ambigüedad
+        if (languageId) {
+            requestBody.languageId = languageId;
+        }
+        
+        const response = await axiosInstance.post("/api/snippets", requestBody, {
             headers: {
                 Authorization: `Bearer ${token}`
             }

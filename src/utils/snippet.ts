@@ -14,6 +14,7 @@ export type CreateSnippet = {
   language: string;
   extension: string;
   version: string;
+  languageId?: string; // ID del lenguaje para evitar ambigüedad cuando hay múltiples versiones
 }
 
 export type CreateSnippetWithLang = CreateSnippet & { language: string, version: string }

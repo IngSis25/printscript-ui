@@ -11,7 +11,7 @@ import {
     Typography
 } from "@mui/material";
 import {highlight, languages} from "prismjs";
-import {useEffect, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import Editor from "react-simple-code-editor";
 
 import "prismjs/components/prism-clike";
@@ -29,12 +29,30 @@ export const AddSnippetModal = ({open, onClose, defaultSnippet}: {
     defaultSnippet?: CreateSnippetWithLang
 }) => {
     const [language, setLanguage] = useState(defaultSnippet?.language ?? "Printscript");
+    const [version, setVersion] = useState(defaultSnippet?.version ?? "");
     const [code, setCode] = useState(defaultSnippet?.content ?? "");
     const [snippetName, setSnippetName] = useState(defaultSnippet?.name ?? "")
     const {mutateAsync: createSnippet, isLoading: loadingSnippet} = useCreateSnippet({
         onSuccess: () => queryClient.invalidateQueries('listSnippets')
     })
     const {data: fileTypes, isLoading: loadingFileTypes, error: fileTypesError} = useGetFileTypes();
+
+    // Obtener las versiones disponibles para el lenguaje seleccionado
+    const availableVersions = useMemo(() => {
+        return fileTypes
+            ?.filter((f) => f.language === language)
+            .map((f) => ({ version: f.version, extension: f.extension, id: f.id }))
+            .filter((v, index, self) => 
+                index === self.findIndex((t) => t.version === v.version)
+            ) || [];
+    }, [fileTypes, language]);
+
+    // Cuando cambia el lenguaje, seleccionar la primera versión disponible
+    useEffect(() => {
+        if (availableVersions.length > 0 && !version) {
+            setVersion(availableVersions[0].version);
+        }
+    }, [language, availableVersions, version]);
 
     useEffect(() => {
         console.log("FileTypes data:", fileTypes);
@@ -43,13 +61,17 @@ export const AddSnippetModal = ({open, onClose, defaultSnippet}: {
     }, [fileTypes, loadingFileTypes, fileTypesError]);
 
     const handleCreateSnippet = async () => {
-        const selectedFileType = fileTypes?.find((f) => f.language === language);
+        const selectedFileType = fileTypes?.find((f) => f.language === language && f.version === version);
+        if (!selectedFileType) {
+            throw new Error("No se pudo encontrar el tipo de archivo seleccionado");
+        }
         const newSnippet: CreateSnippet = {
             name: snippetName,
             content: code,
             language: language,
-            extension: selectedFileType?.extension ?? "prs",
-            version: selectedFileType?.version ?? "1.1",
+            extension: selectedFileType.extension,
+            version: selectedFileType.version,
+            languageId: selectedFileType.id, // Enviar el ID del lenguaje para evitar ambigüedad
         }
         await createSnippet(newSnippet);
         onClose();
@@ -59,6 +81,7 @@ export const AddSnippetModal = ({open, onClose, defaultSnippet}: {
         if (defaultSnippet) {
             setCode(defaultSnippet?.content)
             setLanguage(defaultSnippet?.language)
+            setVersion(defaultSnippet?.version)
             setSnippetName(defaultSnippet?.name)
         }
     }, [defaultSnippet]);
@@ -71,7 +94,7 @@ export const AddSnippetModal = ({open, onClose, defaultSnippet}: {
                                 sx={{display: 'flex', alignItems: 'center'}}>
                         Add Snippet
                     </Typography>
-                    <Button disabled={!snippetName || !code || !language || loadingSnippet} variant="contained"
+                    <Button disabled={!snippetName || !code || !language || !version || loadingSnippet} variant="contained"
                             disableRipple
                             sx={{boxShadow: 0}} onClick={handleCreateSnippet}>
                         <Box pr={1} display={"flex"} alignItems={"center"} justifyContent={"center"}>
@@ -100,7 +123,10 @@ export const AddSnippetModal = ({open, onClose, defaultSnippet}: {
                     labelId="language-select-label"
                     id="language-select"
                     value={language}
-                    onChange={(e: SelectChangeEvent<string>) => setLanguage(e.target.value)}
+                    onChange={(e: SelectChangeEvent<string>) => {
+                        setLanguage(e.target.value);
+                        setVersion(""); // Resetear versión al cambiar lenguaje
+                    }}
                     sx={{width: '50%'}}
                     disabled={loadingFileTypes}
                 >
@@ -109,12 +135,41 @@ export const AddSnippetModal = ({open, onClose, defaultSnippet}: {
                     ) : fileTypesError ? (
                         <MenuItem disabled>Error loading languages</MenuItem>
                     ) : fileTypes && fileTypes.length > 0 ? (
-                        fileTypes.map(x => (
-                            <MenuItem data-testid={`menu-option-${x.language}`} key={x.language}
-                                      value={x.language}>{capitalize((x.language))}</MenuItem>
+                        // Mostrar solo lenguajes únicos
+                        Array.from(new Set(fileTypes.map(x => x.language))).map(lang => (
+                            <MenuItem data-testid={`menu-option-${lang}`} key={lang}
+                                      value={lang}>{capitalize((lang))}</MenuItem>
                         ))
                     ) : (
                         <MenuItem disabled>No languages available</MenuItem>
+                    )}
+                </Select>
+            </Box>
+            <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '16px'
+            }}>
+                <InputLabel htmlFor="version">Version</InputLabel>
+                <Select
+                    labelId="version-select-label"
+                    id="version-select"
+                    value={version}
+                    onChange={(e: SelectChangeEvent<string>) => setVersion(e.target.value)}
+                    sx={{width: '50%'}}
+                    disabled={loadingFileTypes || !language || availableVersions.length === 0}
+                >
+                    {loadingFileTypes ? (
+                        <MenuItem disabled>Loading versions...</MenuItem>
+                    ) : !language ? (
+                        <MenuItem disabled>Select a language first</MenuItem>
+                    ) : availableVersions.length === 0 ? (
+                        <MenuItem disabled>No versions available for this language</MenuItem>
+                    ) : (
+                        availableVersions.map(v => (
+                            <MenuItem data-testid={`menu-option-version-${v.version}`} key={v.version}
+                                      value={v.version}>{v.version}</MenuItem>
+                        ))
                     )}
                 </Select>
             </Box>

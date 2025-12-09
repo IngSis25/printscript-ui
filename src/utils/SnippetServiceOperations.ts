@@ -113,10 +113,19 @@ export class SnippetServiceOperations implements SnippetOperations {
             throw new Error("No se puede obtener el token de autenticación");
         }
         const token = await this.getAccessTokenSilently(options);
-        const {name, content, language, extension, version} = createSnippet;
+        const {name, content, language, extension, version, languageId} = createSnippet;
         const owner = this.user?.email
         try {
-            return await useCreateSnippet(name, content, language, extension, version, token, owner);
+            return await useCreateSnippet(
+                name, 
+                content, 
+                language, 
+                extension, 
+                version, 
+                token, 
+                owner ?? undefined, 
+                languageId ?? undefined
+            );
         } catch (error) {
             if (error instanceof Error) {
                 throw new Error("Failed to create snippet: " + error.message);
@@ -176,13 +185,42 @@ export class SnippetServiceOperations implements SnippetOperations {
     }
 
 
-    async getFormatRules(): Promise<Rule[]> {
+    async getFormatRules(version?: string): Promise<Rule[]> {
         if (!this.getAccessTokenSilently) {
             throw new Error("No se puede obtener el token de autenticación");
         }
+        
+        // Si no se proporciona versión, obtener la última versión disponible de Printscript
+        let versionToUse = version;
+        if (!versionToUse) {
+            try {
+                const fileTypes = await this.getFileTypes();
+                const printscriptVersions = fileTypes
+                    .filter(f => f.language.toLowerCase() === "printscript")
+                    .map(f => f.version)
+                    .sort((a, b) => {
+                        // Ordenar versiones semánticas (1.1 > 1.0)
+                        const aParts = a.split('.').map(Number);
+                        const bParts = b.split('.').map(Number);
+                        for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+                            const aPart = aParts[i] || 0;
+                            const bPart = bParts[i] || 0;
+                            if (aPart !== bPart) {
+                                return bPart - aPart; // Orden descendente
+                            }
+                        }
+                        return 0;
+                    });
+                versionToUse = printscriptVersions[0] || "1.1"; // Usar la última versión o 1.1 como fallback
+            } catch (error) {
+                console.warn("No se pudieron obtener las versiones disponibles, usando 1.1 como fallback", error);
+                versionToUse = "1.1";
+            }
+        }
+        
         // fetchWithAuth ya maneja el token automáticamente
         const response = await this.fetchWithAuth(
-            `${SNIPPETS_SERVICE_URL}/api/rules/format?version=1.1`,
+            `${SNIPPETS_SERVICE_URL}/api/rules/format?version=${versionToUse}`,
             {
                 method: "GET",
             }
@@ -346,8 +384,7 @@ export class SnippetServiceOperations implements SnippetOperations {
             }
 
             const code = snippet.content ?? "";
-            // Hardcodear temporalmente a versión 1.1
-            const version = "1.1";
+            const version = snippet.version;
 
             // Llamar al runner-service para ejecutar el snippet (usando token obtenido al vuelo)
             const response = await this.fetchWithAuth(`${RUNNER_SERVICE_URL}/api/printscript/interpret`, {

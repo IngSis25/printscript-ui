@@ -18,7 +18,7 @@ export interface SnippetOperations {
 
   shareSnippet(snippetId: string, userId: string, role: string): Promise<Snippet>
 
-  getFormatRules(): Promise<Rule[]>
+  getFormatRules(version?: string): Promise<Rule[]>
 
   getLintingRules(): Promise<Rule[]>
 

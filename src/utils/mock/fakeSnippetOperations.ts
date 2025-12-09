@@ -61,7 +61,7 @@ export class FakeSnippetOperations implements SnippetOperations {
     })
   }
 
-  getFormatRules(): Promise<Rule[]> {
+  getFormatRules(version?: string): Promise<Rule[]> {
     return new Promise(resolve => {
       setTimeout(() => resolve(this.fakeStore.getFormatRules()), DELAY)
     })
