@@ -40,8 +40,6 @@ const App = () => {
                 // Asegurar que el ToastContainer aparezca por encima de los Modals
                 // react-toastify tiene z-index 9999 por defecto, pero lo hacemos explícito
                 style={{ zIndex: 1500 }}
-                // Configurar la transición para que Cypress pueda esperarla correctamente
-                transitionDuration={225}
             />
             {/*<ToastContainer*/}
             {/*    position="top-right"*/}
