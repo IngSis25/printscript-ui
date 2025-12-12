@@ -321,10 +321,12 @@ export class SnippetServiceOperations implements SnippetOperations {
         try {
             // El id viene como string del frontend, pero el backend espera Long
             const testId = testCase.id;
-            const response = await axiosInstance.post<string>(`api/tests/${testId}/run`);
-            const result = response.data.trim().toLowerCase();
-            if (result === "success" || result === "fail") {
-                return result as TestCaseResult;
+            const response = await axiosInstance.post<{ status: string; errors?: string[] }>(`api/tests/${testId}/run`);
+            const result = response.data;
+            
+            // El nuevo formato devuelve { status: "success" | "fail", errors?: string[] }
+            if (result.status === "success" || result.status === "fail") {
+                return result.status as TestCaseResult;
             }
             // Si el backend retorna algo inesperado, asumimos que falló
             return "fail";

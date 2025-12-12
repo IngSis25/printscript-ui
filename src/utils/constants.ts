@@ -1,4 +1,4 @@
-export const FRONTEND_URL = process?.env?.FRONTEND_URL ?? "http://localhost:5174"
+export const FRONTEND_URL = process?.env?.FRONTEND_URL ?? "https://ingsis25.duckdns.org"
 export const BACKEND_URL = process?.env?.BACKEND_URL ?? "http://localhost:8001/api"
 export const AUTH0_USERNAME = process?.env?.AUTH0_USERNAME ?? "test@gmail.com"
 export const AUTH0_PASSWORD = process?.env?.AUTH0_PASSWORD ?? "Ingenieria2025!"
