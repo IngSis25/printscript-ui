@@ -67,7 +67,7 @@ export const fetchFileTypes = async (): Promise<FileType[]> => {
             };
             console.log("Mapped result:", result);
             return result;
-        }).filter((ft) => ft.language && ft.version) as FileType[]; // Filtrar items inválidos
+        }).filter((ft: { language: never; version: never; }) => ft.language && ft.version) as FileType[]; // Filtrar items inválidos
         
         console.log("Final mapped fileTypes:", mapped);
         return mapped;
