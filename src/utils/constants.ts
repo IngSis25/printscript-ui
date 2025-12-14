@@ -2,7 +2,7 @@ export const FRONTEND_URL =
     import.meta.env.VITE_FRONTEND_URL ?? "https://ingsis25.duckdns.org"
 
 export const BACKEND_URL =
-    import.meta.env.VITE_BACKEND_URL ?? "https://ingsis25.duckdns.org/api"
+    import.meta.env.VITE_BACKEND_URL ?? "https://ingsis25.duckdns.org/"
 
 export const AUTH0_USERNAME =
     import.meta.env.VITE_AUTH0_USERNAME ?? "test@gmail.com"
