@@ -43,7 +43,8 @@ export const AddSnippetModal = ({
     } = useGetFileTypes();
 
     // Estados del formulario
-    const [language, setLanguage] = useState(defaultSnippet?.language ?? "Printscript");
+    // Inicializar con el primer language disponible o el del defaultSnippet
+    const [language, setLanguage] = useState(defaultSnippet?.language ?? "");
     const [version, setVersion] = useState(defaultSnippet?.version ?? "");
     const [, setLanguageId] = useState<string>(defaultSnippet?.languageId ?? "");
     const [code, setCode] = useState(defaultSnippet?.content ?? "");
@@ -56,6 +57,63 @@ export const AddSnippetModal = ({
         return Array.from(new Set(names));
     }, [fileTypes]);
 
+    // Normalizar el estado del language cuando los fileTypes se cargan por primera vez
+    // Esto maneja casos donde el language viene con la versión concatenada o con case diferente
+    // Solo se ejecuta si hay un language establecido (no vacío)
+    useEffect(() => {
+        if (!fileTypes || fileTypes.length === 0 || availableLanguages.length === 0) return;
+        if (!language || language.trim() === "") return; // Solo normalizar si hay un language establecido
+        
+        // Si el language actual contiene una versión (ej: "PrintScript 1.1"), separarlo
+        const versionPatterns = [
+            /\s+(\d+\.\d+)$/,
+            /(\d+\.\d+)$/,
+            /\s+(\d+)$/,
+            /(\d+)$/,
+            /\s+([A-Z0-9]+)$/,
+            /([A-Z0-9]+)$/,
+        ];
+        
+        let normalizedLanguage = language;
+        let extractedVersion = version;
+        
+        // Si el language contiene una versión, extraerla
+        for (const pattern of versionPatterns) {
+            const match = normalizedLanguage.match(pattern);
+            if (match) {
+                if (!extractedVersion || extractedVersion.trim() === "") {
+                    extractedVersion = match[1];
+                }
+                normalizedLanguage = normalizedLanguage.replace(pattern, "").trim();
+                break;
+            }
+        }
+        
+        // Buscar el language normalizado en los fileTypes disponibles (case-insensitive)
+        const matchingLanguage = availableLanguages.find(
+            (lang) => lang.toLowerCase() === normalizedLanguage.toLowerCase()
+        );
+        
+        if (matchingLanguage && matchingLanguage !== language) {
+            console.log(`Normalizing language: "${language}" -> "${matchingLanguage}"`);
+            setLanguage(matchingLanguage);
+        } else if (!matchingLanguage && normalizedLanguage !== language && normalizedLanguage.trim() !== "") {
+            // Si no encontramos coincidencia pero normalizamos el language, usar el normalizado
+            // y buscar la primera versión disponible
+            const firstAvailable = availableLanguages[0];
+            if (firstAvailable) {
+                console.log(`Language "${normalizedLanguage}" not found, using first available: "${firstAvailable}"`);
+                setLanguage(firstAvailable);
+            }
+        }
+        
+        // Si extrajimos una versión del language y no hay versión seteada, actualizarla
+        if (extractedVersion && (!version || version.trim() === "")) {
+            setVersion(extractedVersion);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fileTypes]); // Solo cuando cambian los fileTypes (una vez al cargar)
+
     // Versiones disponibles para el lenguaje seleccionado
     const availableVersions = useMemo(() => {
         const list = Array.isArray(fileTypes) ? fileTypes : [];
@@ -66,6 +124,34 @@ export const AddSnippetModal = ({
             .filter((v, idx, arr) => idx === arr.findIndex((t) => t.version === v.version));
     }, [fileTypes, language]);
 
+    // Cuando se cargan los fileTypes por primera vez, establecer el primer language si no hay uno seleccionado
+    // o si el language actual no coincide con ninguno disponible (case-insensitive)
+    useEffect(() => {
+        if (availableLanguages.length === 0) return;
+        
+        if (!language || language.trim() === "") {
+            const firstLanguage = availableLanguages[0];
+            console.log(`Setting initial language to: "${firstLanguage}"`);
+            setLanguage(firstLanguage);
+        } else {
+            // Verificar si el language actual coincide con alguno disponible (case-insensitive)
+            const matchingLanguage = availableLanguages.find(
+                (lang) => lang.toLowerCase() === language.toLowerCase()
+            );
+            if (!matchingLanguage) {
+                // Si no coincide, usar el primero disponible
+                const firstLanguage = availableLanguages[0];
+                console.log(`Language "${language}" not found in available languages, using: "${firstLanguage}"`);
+                setLanguage(firstLanguage);
+            } else if (matchingLanguage !== language) {
+                // Si coincide pero con case diferente, normalizar al case correcto
+                console.log(`Normalizing language case: "${language}" -> "${matchingLanguage}"`);
+                setLanguage(matchingLanguage);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [availableLanguages]); // Solo cuando cambian los availableLanguages (una vez al cargar)
+    
     // Cuando cambia el lenguaje, elegir primera versión si no hay una seteada
     useEffect(() => {
         if (!version && availableVersions.length > 0) {
@@ -83,8 +169,34 @@ export const AddSnippetModal = ({
     useEffect(() => {
         if (!defaultSnippet) return;
         setCode(defaultSnippet.content ?? "");
-        setLanguage(defaultSnippet.language ?? "Printscript");
-        setVersion(defaultSnippet.version ?? "");
+        
+        // Normalizar el language del defaultSnippet (por si viene con versión concatenada)
+        let normalizedLang = defaultSnippet.language ?? "Printscript";
+        let normalizedVersion = defaultSnippet.version ?? "";
+        
+        // Si el language contiene una versión, separarlo
+        const versionPatterns = [
+            /\s+(\d+\.\d+)$/,
+            /(\d+\.\d+)$/,
+            /\s+(\d+)$/,
+            /(\d+)$/,
+            /\s+([A-Z0-9]+)$/,
+            /([A-Z0-9]+)$/,
+        ];
+        
+        for (const pattern of versionPatterns) {
+            const match = normalizedLang.match(pattern);
+            if (match) {
+                if (!normalizedVersion || normalizedVersion.trim() === "") {
+                    normalizedVersion = match[1];
+                }
+                normalizedLang = normalizedLang.replace(pattern, "").trim();
+                break;
+            }
+        }
+        
+        setLanguage(normalizedLang);
+        setVersion(normalizedVersion);
         setSnippetName(defaultSnippet.name ?? "");
         if (defaultSnippet.languageId) setLanguageId(String(defaultSnippet.languageId));
     }, [defaultSnippet]);
