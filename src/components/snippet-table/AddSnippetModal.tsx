@@ -80,7 +80,6 @@ export const AddSnippetModal = ({
         setLanguageId(selected ? String(selected.id) : "");
     }, [fileTypes, language, version]);
 
-    // Si viene defaultSnippet, hidratar todo
     useEffect(() => {
         if (!defaultSnippet) return;
         setCode(defaultSnippet.content ?? "");
