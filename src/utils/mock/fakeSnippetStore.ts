@@ -1,4 +1,4 @@
-import {ComplianceEnum, CreateSnippet, Snippet, UpdateSnippet} from '../snippet'
+import {ComplianceEnum, CreateSnippet, Snippet, SnippetWithLintWarnings, UpdateSnippet} from '../snippet'
 import {v4 as uuid} from 'uuid'
 import {PaginatedUsers} from "../users.ts";
 import {TestCase} from "../../types/TestCase.ts";
@@ -12,27 +12,36 @@ const INITIAL_SNIPPETS: Snippet[] = [
     name: 'Super Snippet',
     content: 'let a : number = 5;\nlet b : number = 5;\n\nprintln(a + b);',
     compliance: 'pending',
+    status: 'pending',
     author: 'John Doe',
+    owner: 'John Doe',
     language: 'printscript',
-    extension: 'prs'
+    extension: 'prs',
+    version: '1.0'
   },
   {
     id: 'c48cf644-fbc1-4649-a8f4-9dd7110640d9',
     name: 'Extra cool Snippet',
     content: 'let a : number = 5;\nlet b : number = 5;\n\nprintln(a + b);',
     compliance: 'not-compliant',
+    status: 'not-compliant',
     author: 'John Doe',
+    owner: 'John Doe',
     language: 'printscript',
-    extension: 'prs'
+    extension: 'prs',
+    version: '1.0'
   },
   {
     id: '34bf4b7a-d4a1-48be-bb26-7d9a3be46227',
     name: 'Boaring Snippet',
     content: 'let a : number = 5;\nlet b : number = 5;\n\nprintln(a + b);',
     compliance: 'compliant',
+    status: 'compliant',
     author: 'John Doe',
+    owner: 'John Doe',
     language: 'printscript',
-    extension: 'prs'
+    extension: 'prs',
+    version: '1.0'
   }
 ]
 
@@ -96,30 +105,35 @@ const INITIAL_FORMATTING_RULES: Rule[] = [
   }
 ]
 
+// Reglas reales de linter según PrintScript:
+// - UnusedVariableCheck (siempre activa)
+// - NamingFormatCheck (configurable, por ejemplo camelCase)
+// - PrintUseCheck (boolean)
+// - ReadInputCheck (boolean)
 const INITIAL_LINTING_RULES: Rule[] = [
   {
-    id: '1',
-    name: "no-expressions-in-print-line",
+    id: "UnusedVariableCheck",
+    name: "UnusedVariableCheck",
     isActive: true,
-    value: null
+    value: null,
   },
   {
-    id: '2',
-    name: "no-unused-vars",
-    isActive: true,
-    value: null
-  },
-  {
-    id: '3',
-    name: "no-undef-vars",
+    id: "NamingFormatCheck",
+    name: "NamingFormatCheck",
     isActive: false,
-    value: null
+    value: "camelCase", // camelCase o snake_case
   },
   {
-    id: '4',
-    name: "no-unused-params",
+    id: "PrintUseCheck",
+    name: "PrintUseCheck",
     isActive: false,
-    value: null
+    value: null, // boolean
+  },
+  {
+    id: "ReadInputCheck",
+    name: "ReadInputCheck",
+    isActive: false,
+    value: null, // boolean
   },
 ]
 
@@ -142,18 +156,26 @@ const fileTypes: FileType[] = [
   {
     language: "printscript",
     extension: "prs",
+    version: "1.0",
+    id: "1"
   },
   {
     language: "python",
     extension: "py",
+    version: "3.11",
+    id: "2"
   },
   {
     language: "java",
     extension: "java",
+    version: "17",
+    id: "3"
   },
   {
     language: 'golang',
-    extension: 'go'
+    extension: 'go',
+    version: "1.21",
+    id: "4"
   }
 ]
 
@@ -175,16 +197,21 @@ export class FakeSnippetStore {
     this.lintingRules = INITIAL_LINTING_RULES
   }
 
-  listSnippetDescriptors(): Snippet[] {
-    return Array.from(this.snippetMap, ([, value]) => value)
+  listSnippetDescriptors(): SnippetWithLintWarnings[] {
+    return Array.from(this.snippetMap, ([, value]) => ({
+      ...value,
+      lintWarnings: [] as string[]
+    }))
   }
 
   createSnippet(createSnippet: CreateSnippet): Snippet {
     const id = uuid();
-    const newSnippet = {
+    const newSnippet: Snippet = {
       id,
       compliance: 'compliant' as ComplianceEnum,
+      status: 'compliant' as ComplianceEnum,
       author: 'yo',
+      owner: 'yo',
       ...createSnippet
     }
     this.snippetMap.set(id, newSnippet)

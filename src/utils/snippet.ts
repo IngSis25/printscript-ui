@@ -13,26 +13,40 @@ export type CreateSnippet = {
   content: string;
   language: string;
   extension: string;
+  version: string;
+  languageId?: string; // ID del lenguaje para evitar ambigüedad cuando hay múltiples versiones
 }
 
-export type CreateSnippetWithLang = CreateSnippet & { language: string }
+export type CreateSnippetWithLang = CreateSnippet & { language: string, version: string }
 
 export type UpdateSnippet = {
-  content: string
+    content: string
 }
 
 export type Snippet = CreateSnippet & {
-  id: string
+    id: string
+    userRole?: string  // "Editor", "Viewer", "Owner", or undefined if not loaded
 } & SnippetStatus
 
-type SnippetStatus = {
-  compliance: ComplianceEnum;
-  author: string;
-}
-export type PaginatedSnippets = Pagination & {
-  snippets: Snippet[]
+export type SnippetWithErr = Snippet & {
+    errors: string[]
 }
 
+type SnippetStatus = {
+    status: ComplianceEnum;
+    author: string;
+    owner: string;
+    compliance?: ComplianceEnum; // Para mostrar en la tabla
+}
+export type SnippetWithLintWarnings = Snippet & {
+    lintWarnings: string[];
+}
+export type PaginatedSnippets = Pagination & {
+    snippets: SnippetWithLintWarnings[]
+}
+
+
 export const getFileLanguage = (fileTypes: FileType[], fileExt?: string) => {
-  return fileExt && fileTypes?.find(x => x.extension == fileExt)
+
+    return fileExt && fileTypes?.find(x => x.extension.replace(/^\./, '') === fileExt);
 }

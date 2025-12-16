@@ -4,6 +4,7 @@ import {FRONTEND_URL} from "./src/utils/constants";
 dotenv.config()
 
 export default defineConfig({
+  projectId: 'u662dq',
   e2e: {
     setupNodeEvents(_, config) {
       config.env = process.env

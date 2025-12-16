@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   Button,
   Card,
@@ -12,6 +12,33 @@ import {useGetLintingRules, useModifyLintingRules} from "../../utils/queries.tsx
 import {queryClient} from "../../App.tsx";
 import {Rule} from "../../types/Rule.ts";
 
+const DEFAULT_LINT_RULES: Rule[] = [
+  {
+    id: "UnusedVariableCheck",
+    name: "UnusedVariableCheck",
+    isActive: true,
+    value: null,
+  },
+  {
+    id: "NamingFormatCheck",
+    name: "NamingFormatCheck",
+    isActive: false,
+    value: "camelCase",
+  },
+  {
+    id: "PrintUseCheck",
+    name: "PrintUseCheck",
+    isActive: false,
+    value: null,
+  },
+  {
+    id: "ReadInputCheck",
+    name: "ReadInputCheck",
+    isActive: false,
+    value: null,
+  },
+];
+
 const LintingRulesList = () => {
   const [rules, setRules] = useState<Rule[] | undefined>([]);
 
@@ -20,9 +47,16 @@ const LintingRulesList = () => {
     onSuccess: () => queryClient.invalidateQueries('lintingRules')
   })
 
-  useEffect(() => {
-    setRules(data)
+  const normalizedData: Rule[] = useMemo(() => {
+    if (!data || data.length === 0) return DEFAULT_LINT_RULES;
+    const allowed = new Set(DEFAULT_LINT_RULES.map(r => r.name));
+    const filtered = data.filter(r => allowed.has(r.name));
+    return filtered.length ? filtered : DEFAULT_LINT_RULES;
   }, [data]);
+
+  useEffect(() => {
+    setRules(normalizedData)
+  }, [normalizedData]);
 
   const handleValueChange = (rule: Rule, newValue: string | number) => {
     const newRules = rules?.map(r => {
@@ -41,6 +75,9 @@ const LintingRulesList = () => {
   };
 
   const toggleRule = (rule: Rule) => () => {
+    if (rule.name === "UnusedVariableCheck") {
+      return; // siempre activa, no se puede desactivar
+    }
     const newRules = rules?.map(r => {
       if (r.name === rule.name) {
         return {...r, isActive: !r.isActive}

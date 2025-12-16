@@ -1,4 +1,4 @@
-import {CreateSnippet, PaginatedSnippets, Snippet, UpdateSnippet} from './snippet'
+import {CreateSnippet, PaginatedSnippets, Snippet, SnippetWithErr, UpdateSnippet} from './snippet'
 import {PaginatedUsers} from "./users.ts";
 import {TestCase} from "../types/TestCase.ts";
 import {TestCaseResult} from "./queries.tsx";
@@ -8,25 +8,25 @@ import {Rule} from "../types/Rule.ts";
 export interface SnippetOperations {
   listSnippetDescriptors(page: number,pageSize: number,sippetName?: string): Promise<PaginatedSnippets>
 
-  createSnippet(createSnippet: CreateSnippet): Promise<Snippet>
+  createSnippet(createSnippet: CreateSnippet): Promise<SnippetWithErr>
 
   getSnippetById(id: string): Promise<Snippet | undefined>
 
-  updateSnippetById(id: string, updateSnippet: UpdateSnippet): Promise<Snippet>
+  updateSnippetById(id: string, updateSnippet: UpdateSnippet): Promise<SnippetWithErr>
 
   getUserFriends(name?: string,page?: number,pageSize?: number): Promise<PaginatedUsers>
 
-  shareSnippet(snippetId: string,userId: string): Promise<Snippet>
+  shareSnippet(snippetId: string, userId: string, role: string): Promise<Snippet>
 
-  getFormatRules(): Promise<Rule[]>
+  getFormatRules(version?: string): Promise<Rule[]>
 
   getLintingRules(): Promise<Rule[]>
 
-  getTestCases(): Promise<TestCase[]>
+  getTestCases(snippetId: string): Promise<TestCase[]>
 
-  formatSnippet(snippet: string): Promise<string>
+  formatSnippet(snippetId: string): Promise<string>
 
-  postTestCase(testCase: Partial<TestCase>): Promise<TestCase>
+  postTestCase(testCase: Partial<TestCase>, snippetId: string): Promise<TestCase>
 
   removeTestCase(id: string): Promise<string>
 
@@ -39,4 +39,8 @@ export interface SnippetOperations {
   modifyFormatRule(newRules: Rule[]): Promise<Rule[]>
 
   modifyLintingRule(newRules: Rule[]): Promise<Rule[]>
+
+  runSnippet(snippetId: string, inputs?: string[]): Promise<string[]>
+
+  downloadSnippet(snippetId: string, includeMetadata: boolean): Promise<void>
 }

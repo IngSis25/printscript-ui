@@ -5,20 +5,46 @@ import {AddRounded} from "@mui/icons-material";
 import {useGetTestCases, usePostTestCase, useRemoveTestCase} from "../../utils/queries.tsx";
 import {TabPanel} from "./TabPanel.tsx";
 import {queryClient} from "../../App.tsx";
+import {TestCase} from "../../types/TestCase.ts";
+import {toast} from "react-toastify";
 
 type TestSnippetModalProps = {
     open: boolean
     onClose: () => void
+    snippetId: string
 }
 
-export const TestSnippetModal = ({open, onClose}: TestSnippetModalProps) => {
+export const TestSnippetModal = ({open, onClose, snippetId}: TestSnippetModalProps) => {
     const [value, setValue] = useState(0);
 
-    const {data: testCases} = useGetTestCases();
-    const {mutateAsync: postTestCase} = usePostTestCase();
+    const {data: testCases} = useGetTestCases(snippetId);
+    const postTestCase = usePostTestCase(snippetId);
     const {mutateAsync: removeTestCase} = useRemoveTestCase({
         onSuccess: () => queryClient.invalidateQueries('testCases')
     });
+
+
+    const handleAddTestCase = async (testCase: Partial<TestCase>) => {
+        try {
+            const savedTestCase = await postTestCase.mutateAsync(testCase);
+            await queryClient.invalidateQueries(['testCases', snippetId]);
+            toast.success("Test guardado correctamente");
+            if (!testCase.id && savedTestCase?.id) {
+                setTimeout(() => {
+                    const updatedTests = queryClient.getQueryData<TestCase[]>(['testCases', snippetId]);
+                    if (updatedTests) {
+                        const newIndex = updatedTests.findIndex(t => t.id === savedTestCase.id);
+                        if (newIndex !== -1) {
+                            setValue(newIndex);
+                        }
+                    }
+                }, 100);
+            }
+        } catch (error) {
+            console.error("Error guardando test:", error);
+            toast.error("Error al guardar el test. Por favor, intenta nuevamente.");
+        }
+    };
 
     const handleChange = (_: SyntheticEvent, newValue: number) => {
         setValue(newValue);
@@ -45,13 +71,19 @@ export const TestSnippetModal = ({open, onClose}: TestSnippetModalProps) => {
                     </IconButton>
                 </Tabs>
                 {testCases?.map((testCase, index) => (
-                    <TabPanel index={index} value={value} test={testCase}
-                              setTestCase={(tc) => postTestCase(tc)}
-                              removeTestCase={(i) => removeTestCase(i)}
+                    <TabPanel
+                        index={index}
+                        value={value}
+                        test={testCase}
+                        setTestCase={handleAddTestCase}
+                        removeTestCase={(i) => removeTestCase(i)}
+                        key={testCase.id}
                     />
                 ))}
-                <TabPanel index={(testCases?.length ?? 0) + 1} value={value}
-                          setTestCase={(tc) => postTestCase(tc)}
+                <TabPanel
+                    index={(testCases?.length ?? 0) + 1}
+                    value={value}
+                    setTestCase={handleAddTestCase}
                 />
             </Box>
         </ModalWrapper>

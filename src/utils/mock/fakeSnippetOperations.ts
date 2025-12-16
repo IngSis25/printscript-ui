@@ -1,6 +1,6 @@
 import {SnippetOperations} from '../snippetOperations'
 import {FakeSnippetStore} from './fakeSnippetStore'
-import {CreateSnippet, PaginatedSnippets, Snippet, UpdateSnippet} from '../snippet'
+import {CreateSnippet, PaginatedSnippets, Snippet, SnippetWithErr, UpdateSnippet} from '../snippet'
 import autoBind from 'auto-bind'
 import {PaginatedUsers} from "../users.ts";
 import {TestCase} from "../../types/TestCase.ts";
@@ -17,9 +17,12 @@ export class FakeSnippetOperations implements SnippetOperations {
     autoBind(this)
   }
 
-  createSnippet(createSnippet: CreateSnippet): Promise<Snippet> {
+  createSnippet(createSnippet: CreateSnippet): Promise<SnippetWithErr> {
     return new Promise(resolve => {
-      setTimeout(() => resolve(this.fakeStore.createSnippet(createSnippet)), DELAY)
+      setTimeout(() => {
+        const created = this.fakeStore.createSnippet(createSnippet) as Snippet & { errors?: string[] }
+        resolve({...created, errors: created.errors ?? []})
+      }, DELAY)
     })
   }
 
@@ -42,9 +45,12 @@ export class FakeSnippetOperations implements SnippetOperations {
     })
   }
 
-  updateSnippetById(id: string, updateSnippet: UpdateSnippet): Promise<Snippet> {
+  updateSnippetById(id: string, updateSnippet: UpdateSnippet): Promise<SnippetWithErr> {
     return new Promise(resolve => {
-      setTimeout(() => resolve(this.fakeStore.updateSnippet(id, updateSnippet)), DELAY)
+      setTimeout(() => {
+        const updated = this.fakeStore.updateSnippet(id, updateSnippet) as Snippet & { errors?: string[] }
+        resolve({...updated, errors: updated.errors ?? []})
+      }, DELAY)
     })
   }
 
@@ -54,14 +60,15 @@ export class FakeSnippetOperations implements SnippetOperations {
     })
   }
 
-  shareSnippet(snippetId: string): Promise<Snippet> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  shareSnippet(snippetId: string, _userId: string, _role: string): Promise<Snippet> {
     return new Promise(resolve => {
-      // @ts-expect-error, it will always find it in the fake store
-      setTimeout(() => resolve(this.fakeStore.getSnippetById(snippetId)), DELAY)
+      setTimeout(() => resolve(this.fakeStore.getSnippetById(snippetId)!), DELAY)
     })
   }
 
-  getFormatRules(): Promise<Rule[]> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getFormatRules(_version?: string): Promise<Rule[]> {
     return new Promise(resolve => {
       setTimeout(() => resolve(this.fakeStore.getFormatRules()), DELAY)
     })
@@ -73,9 +80,16 @@ export class FakeSnippetOperations implements SnippetOperations {
     })
   }
 
-  formatSnippet(snippetContent: string): Promise<string> {
+  formatSnippet(snippetId: string): Promise<string> {
     return new Promise(resolve => {
-      setTimeout(() => resolve(this.fakeStore.formatSnippet(snippetContent)), DELAY)
+      setTimeout(() => {
+        const snippet = this.fakeStore.getSnippetById(snippetId)
+        if (snippet) {
+          resolve(this.fakeStore.formatSnippet(snippet.content ?? ""))
+        } else {
+          resolve("")
+        }
+      }, DELAY)
     })
   }
 
@@ -124,6 +138,34 @@ export class FakeSnippetOperations implements SnippetOperations {
   modifyLintingRule(newRules: Rule[]): Promise<Rule[]> {
     return new Promise(resolve => {
       setTimeout(() => resolve(this.fakeStore.modifyLintingRule(newRules)), DELAY)
+    })
+  }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  runSnippet(snippetId: string, _inputs?: string[]): Promise<string[]> {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        const snippet = this.fakeStore.getSnippetById(snippetId)
+        if (snippet) {
+          resolve(["Output from snippet execution"])
+        } else {
+          resolve([])
+        }
+      }, DELAY)
+    })
+  }
+
+  downloadSnippet(snippetId: string, includeMetadata: boolean): Promise<void> {
+    return new Promise(resolve => {
+      setTimeout(() => {
+        // Simular descarga del snippet
+        const snippet = this.fakeStore.getSnippetById(snippetId)
+        if (snippet) {
+          // En un caso real, aquí se descargaría el archivo
+          console.log("Downloading snippet:", snippetId, "includeMetadata:", includeMetadata)
+        }
+        resolve()
+      }, DELAY)
     })
   }
 }

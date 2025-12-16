@@ -35,13 +35,32 @@ const StyledTableRow = styled(TableRow)(({theme}) => ({
 }));
 
 
+// Función para formatear el compliance de forma más legible
+const formatCompliance = (compliance?: string): string => {
+  if (!compliance) return '-';
+  switch (compliance.toLowerCase()) {
+    case 'pending':
+      return 'Pendiente';
+    case 'failed':
+      return 'Fallido';
+    case 'not-compliant':
+    case 'not_compliant':
+      return 'No conforme';
+    case 'compliant':
+    case 'success':
+      return 'Conforme';
+    default:
+      return compliance;
+  }
+};
+
 export const SnippetRow = ({snippet, onClick, ...props}: { snippet: Snippet, onClick: () => void } & TableRowProps) => {
   return (
       <StyledTableRow onClick={onClick} sx={{backgroundColor: 'white', border: 0, height: '75px'}} {...props}>
         <StyledTableCell>{snippet.name}</StyledTableCell>
         <StyledTableCell>{snippet.language}</StyledTableCell>
-        <StyledTableCell>{snippet.author}</StyledTableCell>
-        <StyledTableCell>{snippet.compliance}</StyledTableCell>
+        <StyledTableCell>{snippet.author || snippet.owner || '-'}</StyledTableCell>
+        <StyledTableCell>{formatCompliance(snippet.compliance || snippet.status)}</StyledTableCell>
       </StyledTableRow>
   )
 }
